@@ -1,0 +1,11 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "files.eol": "\n",
+  "editor.formatOnSave": true,
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "files.exclude": { "**/out": true, "**/include": true },
+  "search.exclude": { "**/out": true, "**/include": true, "**/build": true, "**/.tools": true },
+  "eslint.useFlatConfig": true
+}

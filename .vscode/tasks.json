@@ -1,0 +1,8 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    { "label": "Develop", "type": "npm", "script": "dev", "problemMatcher": [], "isBackground": true },
+    { "label": "Check", "type": "npm", "script": "check", "group": "build", "problemMatcher": [] },
+    { "label": "Runtime tests", "type": "npm", "script": "test", "group": "test", "problemMatcher": [] }
+  ]
+}

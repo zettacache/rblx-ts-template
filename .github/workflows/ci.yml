@@ -1,0 +1,56 @@
+name: Checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Pin npm
+        run: npm install --global npm@11.19.1
+      - name: Install Rokit (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          curl --fail --location --retry 3 https://github.com/rojo-rbx/rokit/releases/download/v1.2.0/rokit-1.2.0-linux-x86_64.zip -o rokit.zip
+          unzip rokit.zip -d "$RUNNER_TEMP/rokit"
+          chmod +x "$RUNNER_TEMP/rokit/rokit"
+          echo "$RUNNER_TEMP/rokit" >> "$GITHUB_PATH"
+          rm rokit.zip
+      - name: Install Rokit (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://github.com/rojo-rbx/rokit/releases/download/v1.2.0/rokit-1.2.0-windows-x86_64.zip -OutFile "$env:RUNNER_TEMP/rokit.zip"
+          Expand-Archive "$env:RUNNER_TEMP/rokit.zip" "$env:RUNNER_TEMP/rokit"
+          "$env:RUNNER_TEMP/rokit" >> $env:GITHUB_PATH
+      - run: rokit install --no-trust-check
+      - run: npm ci
+      - run: npm run doctor
+      - run: npm run check
+      - run: npm run test:tooling
+      - run: npm test
+      - run: npm run build:place
+      - run: npm run test:studio -- --build-only
+      - uses: actions/upload-artifact@v4
+        with:
+          name: places-${{ matrix.os }}
+          path: |
+            build/game.rbxlx
+            build/tests.rbxl
+            build/smoke.rbxlx
+          if-no-files-found: error
+          retention-days: 7

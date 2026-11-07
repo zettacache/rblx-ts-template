@@ -1,0 +1,265 @@
+{
+  "version": 1,
+  "sourceRepository": "monster-rng",
+  "description": "Selected reusable tooling; source hashes identify inspected bytes, not the generalized destination.",
+  "files": [
+    {
+      "source": "scripts/blender.cjs",
+      "sourceSha256": "d56a842afe05d3b25478d4996539073f3cf54188228f46a3a1944cb02e7ef9b7",
+      "destination": "scripts/blender.cjs"
+    },
+    {
+      "source": "scripts/blender-cache.cjs",
+      "sourceSha256": "098dd0f3d26128a6b42c9e17186dbba48ff3c8350758b86e1835e69335b2c24c",
+      "destination": "scripts/blender-cache.cjs"
+    },
+    {
+      "source": "scripts/text-files.cjs",
+      "sourceSha256": "7e28356c8c197a8c400bc2049f6d50cb047feff2dc305d9c5aa5a7b7ba5bf26d",
+      "destination": "scripts/text-files.cjs"
+    },
+    {
+      "source": "scripts/studio.cjs",
+      "sourceSha256": "1ebd1cf3e04d31bfe83f227334070641404df60f5fcb6252cf41262f61f8e478",
+      "destination": "scripts/studio.cjs"
+    },
+    {
+      "source": "scripts/studio-mcp-client.cjs",
+      "sourceSha256": "154f191bd279bb14603b5238eea86b7ec19e0e9135b7d050690c9f097d7f70fa",
+      "destination": "scripts/studio-mcp-client.cjs"
+    },
+    {
+      "source": "scripts/studio-result.cjs",
+      "sourceSha256": "4ebf61d116beac272cf505abed5244fb1987fac62544d65c6e32b4271cc3ba17",
+      "destination": "scripts/studio-result.cjs"
+    },
+    {
+      "source": "scripts/studio-state.cjs",
+      "sourceSha256": "c8aea5c003d1c3d4008d0f11b3a56a37290c41c6c1de0d0b6087ffba801ac891",
+      "destination": "scripts/studio-state.cjs"
+    },
+    {
+      "source": "scripts/studio-sources.cjs",
+      "sourceSha256": "1b0bd7416dc553ae93b8b9abb34fd88fa4351ee8eb15146ec19d71540acc52ca",
+      "destination": "scripts/studio-sources.cjs"
+    },
+    {
+      "source": "scripts/studio-author.cjs",
+      "sourceSha256": "59fe66e4d60f4fd5c91eb619df2afceb94e2227117062301308079a3b0a5f3dc",
+      "destination": "scripts/studio-author.cjs"
+    },
+    {
+      "source": "scripts/studio-animation.cjs",
+      "sourceSha256": "f833f3953c6b33462ccecd0519e0e35e7a80a96d7c6055d1e3c6be5f056bf2dd",
+      "destination": "scripts/studio-animation.cjs"
+    },
+    {
+      "source": "scripts/studio-assets.cjs",
+      "sourceSha256": "52be9d22ff78b713fb3550d3fb28d865681c43d56ffd667e7aad58339a5ae7a5",
+      "destination": "scripts/studio-assets.cjs"
+    },
+    {
+      "source": "scripts/studio-mesh-assets.cjs",
+      "sourceSha256": "6581c07fa6af5fb7483bf06213927c30f437c0fb6c5e2ef93e25c9fc2034b858",
+      "destination": "scripts/studio-mesh-assets.cjs"
+    },
+    {
+      "source": "scripts/studio-reservation.cjs",
+      "sourceSha256": "3da4e3596eda5e970d9fc94180766018cdf175705718d6a06c8d37a218efc7c5",
+      "destination": "scripts/studio-reservation.cjs"
+    },
+    {
+      "source": "scripts/studio-guard.cjs",
+      "sourceSha256": "f849d9ed26b1af9696a78c57eda8e9d89f6a90692ec580ffad7d10c2c2827ac4",
+      "destination": "scripts/studio-guard.cjs"
+    },
+    {
+      "source": "scripts/studio-turn.cjs",
+      "sourceSha256": "9b8a044fc63ffa95e3f5f42d2aa893680a969c36e8dca7d30c109f2f47c4d196",
+      "destination": "scripts/studio-turn.cjs"
+    },
+    {
+      "source": "scripts/studio-play.cjs",
+      "sourceSha256": "539f5c9a031896cdd07bbbb90d92fe0b81817fa9b7899986142dfd3cb95df2de",
+      "destination": "scripts/studio-play.cjs"
+    },
+    {
+      "source": "scripts/studio-native-play.cjs",
+      "sourceSha256": "382bac482d79aeb754928b0389e2d763734ff00eef6b91511de5a946828c56aa",
+      "destination": "scripts/studio-native-play.cjs"
+    },
+    {
+      "source": "scripts/studio-device.cjs",
+      "sourceSha256": "61586dd47838a508f5c0e8452631d24915afae297808d2a9234c598b7fee9f7d",
+      "destination": "scripts/studio-device.cjs"
+    },
+    {
+      "source": "scripts/studio-input.cjs",
+      "sourceSha256": "ff45fa5563b012a416a979aa892910fd8f452ccb076979eae9dd5bd6998b39e4",
+      "destination": "scripts/studio-input.cjs"
+    },
+    {
+      "source": "scripts/studio-actions.cjs",
+      "sourceSha256": "248b210db29dfbfb2b64237b80dd5d70549d2ca1043f0a2c2b03b3b5310ac07d",
+      "destination": "scripts/studio-actions.cjs"
+    },
+    {
+      "source": "scripts/studio-schemas.cjs",
+      "sourceSha256": "dab822a3e88ed35e9fd26a74e1695c32b28fc1aa46f44eeba2d2cdfbec48cab1",
+      "destination": "scripts/studio-schemas.cjs"
+    },
+    {
+      "source": "scripts/studio-scenario.cjs",
+      "sourceSha256": "ea9ac7435f92450b187092c24a49cdfa2004d486b053ba6e08cb4552ebb21c8e",
+      "destination": "scripts/studio-scenario.cjs"
+    },
+    {
+      "source": "scripts/studio-author.luau",
+      "sourceSha256": "888b50b705f58d05829c11824a29d187cc46a6466e674afe819fa9683d9f197b",
+      "destination": "scripts/studio-author.luau"
+    },
+    {
+      "source": "scripts/studio-animation.luau",
+      "sourceSha256": "785ed2b701783146d444ef343a96dd1e9e83ebdb74e5d38b89e9d10ce4b34ad2",
+      "destination": "scripts/studio-animation.luau"
+    },
+    {
+      "source": "scripts/studio-device.luau",
+      "sourceSha256": "56a36f0637657bc1bdc30ea15e33d0f6d413a679b28871b27ff6fdc90637099b",
+      "destination": "scripts/studio-device.luau"
+    },
+    {
+      "source": "scripts/studio-input.luau",
+      "sourceSha256": "e369bc00ee129a15c383b899938d7dd3b2739f3b4a4402d1164a61a3a7748305",
+      "destination": "scripts/studio-input.luau"
+    },
+    {
+      "source": "scripts/studio-sources.luau",
+      "sourceSha256": "b38df2701df436c86e709764b383ae7145d544b8eeeaec84515f5ece914aaab5",
+      "destination": "scripts/studio-sources.luau"
+    },
+    {
+      "source": "scripts/blender/worker.py",
+      "sourceSha256": "cbca6b29c0bf61fb5aff575c0c71137b50b323d9c6d3d8cd7b57b47d4fa0a56a",
+      "destination": "scripts/blender/worker.py"
+    },
+    {
+      "source": "scripts/blender/examples/companion.json",
+      "sourceSha256": "cb6e5e2a4785572e077d2ed6f2eeda0f33421b16b573f5ae703d263173837bab",
+      "destination": "scripts/blender/examples/companion.json"
+    },
+    {
+      "source": "scripts/blender/examples/companion.py",
+      "sourceSha256": "3550f0009c1b4f1ba2fddf04d60fe65f9324055d1ccf1c4971957d862cc29256",
+      "destination": "scripts/blender/examples/companion.py"
+    },
+    {
+      "source": "scripts/fixtures/mock-studio-mcp.cjs",
+      "sourceSha256": "707da99de920064f779a3cb2ae5c5a4b14a2f2e4a9e5edcef3bd16f3ddeba19b",
+      "destination": "scripts/fixtures/mock-studio-mcp.cjs"
+    },
+    {
+      "source": "scripts/test-asset-pipelines.cjs",
+      "sourceSha256": "bfeb4cabb2584bbdee297d934d0f93a6ec756e283cb9e6eaae3a7ee5128f292a",
+      "destination": "scripts/test-asset-pipelines.cjs"
+    },
+    {
+      "source": "scripts/test-native-mesh-assets.cjs",
+      "sourceSha256": "e17a11e758566830504724298401002381bd4b78920641298e1e582cac4a230d",
+      "destination": "scripts/test-native-mesh-assets.cjs"
+    },
+    {
+      "source": "scripts/test-studio-cli.cjs",
+      "sourceSha256": "e71af930dbe3e4ef025b01704db9dd8e578b200a2e350c83f95c44fa4e74c742",
+      "destination": "scripts/test-studio-cli.cjs"
+    },
+    {
+      "source": "scripts/test-studio-sources.cjs",
+      "sourceSha256": "8a16bcc659e0939dbb2c5cb98f0b09c989a0e8b626de2d3f91e750535894b1fc",
+      "destination": "scripts/test-studio-sources.cjs"
+    },
+    {
+      "source": "scripts/test-studio-author.cjs",
+      "sourceSha256": "6e3303d9c7c9a7b734ad4e90a080cbfadf84091937c7a47281da14fd89773fab",
+      "destination": "scripts/test-studio-author.cjs"
+    },
+    {
+      "source": "scripts/test-studio-reservation.cjs",
+      "sourceSha256": "6f455bc5149acf5b7cd66149254175cc3776853293f5120c9ffa337fdb36c317",
+      "destination": "scripts/test-studio-reservation.cjs"
+    },
+    {
+      "source": "scripts/test-studio-guard.cjs",
+      "sourceSha256": "682a5a28f9a4027c41ab7957730e6364be923e1af8121e462a26280d2d5ace7e",
+      "destination": "scripts/test-studio-guard.cjs"
+    },
+    {
+      "source": "scripts/test-studio-play.cjs",
+      "sourceSha256": "c2c937a4486a93f45bfdf3735b6dde6ee985d8fa83f9163282c7bb7d9f82a7a2",
+      "destination": "scripts/test-studio-play.cjs"
+    },
+    {
+      "source": "scripts/test-studio-native-play.cjs",
+      "sourceSha256": "5e61b9e4861e7ef2baf3ceb1b2834a11e3a5e15c23a78b89c13e437e1e94ae7c",
+      "destination": "scripts/test-studio-native-play.cjs"
+    },
+    {
+      "source": "scripts/test-studio-input.cjs",
+      "sourceSha256": "c73f76f0fad6aac4ca62d559ce9a10f415607dca411b94ef34a0255c1e54464c",
+      "destination": "scripts/test-studio-input.cjs"
+    },
+    {
+      "source": "scripts/test-text-files.cjs",
+      "sourceSha256": "5d1e20baab60fe7fac95e78544952ad8e78350fca3110aad701d5c53837d8197",
+      "destination": "scripts/test-text-files.cjs"
+    },
+    {
+      "source": ".codex/agents/art_director.toml",
+      "sourceSha256": "d7cab3d8bc42a64ddbe8d13c7f0bffc4b7dd0fcd2cd998f015db6ec8f58b2872",
+      "destination": ".codex/agents/art_director.toml",
+      "adaptation": "Project-neutral role rewritten to inherit model/permissions and reference this template."
+    },
+    {
+      "source": ".codex/agents/blender_artist.toml",
+      "sourceSha256": "84b03d4df06617e56fb5d2f6e07362d061630537a638d25c7ddfa1f3de285a66",
+      "destination": ".codex/agents/blender_artist.toml",
+      "adaptation": "Project-neutral role rewritten to inherit model/permissions and reference this template."
+    },
+    {
+      "source": ".codex/agents/development_coordinator.toml",
+      "sourceSha256": "ba5219c6882e4346d28aaf15afa2e4320dc6981ae494ddf54d29a4c6a760af56",
+      "destination": ".codex/agents/development_coordinator.toml",
+      "adaptation": "Project-neutral role rewritten to inherit model/permissions and reference this template."
+    },
+    {
+      "source": ".codex/agents/gameplay_engineer.toml",
+      "sourceSha256": "7e49c457a426e61493a25b925dd5013083fe9aa41202fdb977fe30f312456a4a",
+      "destination": ".codex/agents/gameplay_engineer.toml",
+      "adaptation": "Project-neutral role rewritten to inherit model/permissions and reference this template."
+    },
+    {
+      "source": ".codex/agents/pipeline_reviewer.toml",
+      "sourceSha256": "6eedeec6e43c347484cfbdb5885d54dbcbe168da75044f632b2fa8669a2c19ff",
+      "destination": ".codex/agents/pipeline_reviewer.toml",
+      "adaptation": "Project-neutral role rewritten to inherit model/permissions and reference this template."
+    },
+    {
+      "source": ".codex/agents/qa_lead.toml",
+      "sourceSha256": "9cfa4c5d99a326705419c4ac0e36f3994e3b7e0e71602b322ab1d801a466f127",
+      "destination": ".codex/agents/qa_lead.toml",
+      "adaptation": "Project-neutral role rewritten to inherit model/permissions and reference this template."
+    },
+    {
+      "source": ".codex/agents/tooling_engineer.toml",
+      "sourceSha256": "7456325071938161bb23662ee690fa98949cbd7f6e8a43b1da53c72c0aab0ce5",
+      "destination": ".codex/agents/tooling_engineer.toml",
+      "adaptation": "Project-neutral role rewritten to inherit model/permissions and reference this template."
+    },
+    {
+      "source": ".codex/agents/ui_ux_designer.toml",
+      "sourceSha256": "e1e0973c9750f104fa962e605b3039f728c7e3ccf5bb9a90a641d376b2aa5026",
+      "destination": ".codex/agents/ui_ux_designer.toml",
+      "adaptation": "Project-neutral role rewritten to inherit model/permissions and reference this template."
+    }
+  ]
+}

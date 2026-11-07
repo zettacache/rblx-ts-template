@@ -1,0 +1,19 @@
+{
+  "name": "template-tests",
+  "globIgnorePaths": ["**/package.json", "**/tsconfig.json"],
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "rbxts_include": {
+        "$path": "include",
+        "node_modules": {
+          "$className": "Folder",
+          "@rbxts": { "$path": "node_modules/@rbxts" },
+          "@flamework": { "$path": "node_modules/@flamework" }
+        }
+      },
+      "TS": { "$path": "out/shared" }
+    },
+    "ServerScriptService": { "TestRunner": { "$path": "tests/run.server.luau" } }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "name": "PipelineCompanion",
+  "script": "companion.py",
+  "formats": ["fbx", "glb"],
+  "views": ["front", "back", "iso"],
+  "size": 384,
+  "animation": {
+    "armature": "CompanionRig",
+    "rootPart": "PipelineCompanion",
+    "start": 1,
+    "end": 33,
+    "fps": 30,
+    "loop": true,
+    "studsPerUnit": 1
+  }
+}

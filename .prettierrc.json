@@ -1,0 +1,9 @@
+{
+  "useTabs": true,
+  "printWidth": 110,
+  "trailingComma": "all",
+  "endOfLine": "lf",
+  "overrides": [
+    { "files": ["*.json", "*.jsonc", "*.md", "*.yaml", "*.yml"], "options": { "useTabs": false } }
+  ]
+}

@@ -1,0 +1,6 @@
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local TestEZ = require(replicatedStorage.rbxts_include.node_modules["@rbxts"].testez.src)
+local results = TestEZ.TestBootstrap:run({ replicatedStorage.TS }, TestEZ.Reporters.TextReporter)
+assert(results.failureCount == 0 and #results.errors == 0, "Runtime test suite failed")
+assert(results.successCount > 0, "No tests were discovered")
+print("Runtime test suite passed")
