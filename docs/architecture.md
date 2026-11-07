@@ -6,7 +6,7 @@ The server owns gameplay state in Jecs. The client submits intent through Flamew
 
 Player lifecycle hooks create/delete session entities. A `PlayerRef` component associates an entity with its player; a `ClientReady` tag marks completion of the starter handshake. `createPlayerSessions` owns the world and can also construct isolated worlds for tests.
 
-Keep a single owner for each state value. UI state may project simulation state when a UI framework is added. Replication, interest filtering, movement interpolation, persistence, and cross-server state are explicit extensions to the starter. Network IDs require a mapping to local entities; independently created worlds cannot assume matching entity IDs.
+Keep a single owner for each state value. React views project confirmed server snapshots into local presentation state. General entity replication, interest filtering, movement interpolation, persistence, and cross-server state are explicit extensions to the starter. Network IDs require a mapping to local entities; independently created worlds cannot assume matching entity IDs.
 
 ## Networking
 
@@ -30,4 +30,10 @@ The GitHub Actions workflow runs layers 1–3 and builds both production and smo
 
 ## Optional modules
 
-Add React/React Roblox and Charm when building shared UI state, ProfileStore for player persistence, and a cleanup library when resource ownership grows. These choices are documented options; the baseline runtime is Jecs plus Flamework networking. Keep template code free of specific game mechanics, asset IDs, and published place IDs.
+React/React Roblox powers the template UI. Charm for shared UI state, ProfileStore for player persistence, and a cleanup library are optional extensions as resource ownership grows. Keep template code free of production game mechanics, asset IDs, and published place IDs.
+
+## Complete reference path
+
+The optional [session counter](reference-feature.md) uses the session world and runs after readiness. Its receiver validates protocol, active session, revision and cooldown, then coalesces work per player. The system owns Count and sends initial/accepted snapshots to that player; the React view only projects confirmed values. The counter demonstrates owner-only scalar replication rather than a general entity replication framework. Non-yielding simulation, stale-session protection and teardown are covered by service-free specs and the dedicated Studio smoke scenario.
+
+`npm run verify` provides the [machine-readable verification contract](verification.md). Add `-- --studio <id>` for owned native smoke acceptance; offline reports explicitly distinguish an unexecuted Studio test from a pass.

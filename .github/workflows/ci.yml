@@ -39,12 +39,14 @@ jobs:
           "$env:RUNNER_TEMP/rokit" >> $env:GITHUB_PATH
       - run: rokit install --no-trust-check
       - run: npm ci
-      - run: npm run doctor
-      - run: npm run check
-      - run: npm run test:tooling
-      - run: npm test
-      - run: npm run build:place
-      - run: npm run test:studio -- --build-only
+      - run: npm run verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-${{ matrix.os }}
+          path: build/verification/
+          if-no-files-found: warn
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         with:
           name: places-${{ matrix.os }}

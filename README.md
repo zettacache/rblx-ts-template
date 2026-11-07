@@ -44,6 +44,10 @@ The starter performs a protocol-version handshake: the client subscribes, sends 
 
 ## Commands
 
+`npm run verify` runs the complete offline check/build suite and writes machine-readable results and logs under `build/verification/`. Use `npm run verify -- --studio <id>` to include automated acceptance in the configured, already-open smoke place. An offline pass explicitly records that Studio was not run. See [verification and smoke automation](docs/verification.md).
+
+The optional [session counter reference](docs/reference-feature.md) demonstrates input, validated bounded commands, Jecs updates, owner-only snapshots and a React view. Its design sources are under `docs/ui/reference-counter/`; disable it through `src/shared/reference-counter-config.ts` when replacing it with game features.
+
 | Command                                   | Purpose                                                   |
 | ----------------------------------------- | --------------------------------------------------------- |
 | `npm run dev`                             | Compiler watcher and Rojo, with coordinated shutdown      |
@@ -98,7 +102,7 @@ Specs are `*.spec.ts` modules that return a TestEZ suite function. `npm test` ex
 
 For live verification, run `npm run test:studio` and press **Play** in the generated smoke place. Require `[Smoke] PASS` in Output, with no errors. It checks the real handshake, ready ECS entity, and duplicate requests. The command launches an interactive editor and does not itself report a passing runtime test. Stop Play and close the smoke place afterward. It opens a new local test place and does not modify another open project.
 
-The production project excludes specs and the TestEZ implementation. CI runs clean lockfile installs, doctor, checks, tooling tests, Luau runtime tests, and production/smoke builds on Windows and Linux. Generated places are uploaded as artifacts; Studio execution remains an interactive check. CI will start once the repository is hosted on GitHub.
+The production project excludes specs and the TestEZ implementation. CI runs clean lockfile installs and the full offline verification command on Windows and Linux. Generated places and verification reports are uploaded as artifacts. CI does not execute Studio; local automated acceptance uses an explicitly configured smoke target. CI will start once the repository is hosted on GitHub.
 
 ## Maintenance
 

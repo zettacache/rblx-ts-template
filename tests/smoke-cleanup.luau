@@ -1,0 +1,1 @@
+return game:GetService("HttpService"):JSONEncode({robloxStudio=1,ok=true,clean=not game:GetService("RunService"):IsRunning() and game:GetAttribute("RobloxToolsNativeStart")==nil and game:GetAttribute("RobloxToolsNativeResult")==nil})

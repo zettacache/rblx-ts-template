@@ -1,0 +1,19 @@
+# Verification reports and Studio acceptance
+
+Run `npm run verify` for the full offline contract: pinned-tool doctor, formatting/lint/compiler checks, tooling regressions, compiled Luau tests, production place and dedicated smoke place. The command stops scheduling checks after failure, returns nonzero, and records skipped checks. CI uses the same command on Windows/Linux and uploads reports even on failure.
+
+Each run writes `build/verification/<uuid>/report.json` and per-check logs. `build/verification/latest.json` contains the latest result and its report path. Read `scope`, `passed`, `studio.status` and `sourceStable` together. An offline pass explicitly says Studio was **not run**. Reports include exact argv, timestamps, exit codes/signals, source-file SHA-256 inventory and fingerprints for successfully produced place artifacts. Source changes during a run invalidate acceptance. Source identity covers runtime, scripts, tests, assets, dependencies, project mappings, tool/compiler/lint pins and CI; prose/design documents are outside the runtime fingerprint. Reports and places are scratch evidence; promote selected evidence to durable project storage if needed.
+
+## Live smoke
+
+The existing `npm run test:studio` remains the manual build/open command. Automated acceptance requires an already-open, dedicated smoke place, a reachable installed Studio MCP bridge, and matching configured target. It does not switch or overwrite an open project.
+
+1. Stop Rojo. Configure `studio-tools.json` for the dedicated local target. An unpublished local smoke place has `expectedPlaceId: "0"`; retain/restore any existing project's configuration deliberately. Never point this test at a production place.
+2. Run `npm run test:studio` to build/open `build/smoke.rbxlx`. Leave it in Edit; no manual Play is needed for automation. Run `npm run studio -- studios` and copy the exact smoke Studio ID.
+3. Run `npm run verify -- --studio <id>` for offline plus native acceptance, or `npm run test:studio -- --automated --studio <id>` for smoke alone. The verifier's final smoke invocation uses `--no-build` internally. Without that option, the standalone command builds first.
+
+Automation requests/acquires a matching `studio:turn`, requires stopped Rojo, checks the exact smoke source marker in Edit, starts its own native test, runs assertion probes and a calibrated button click, captures a screenshot and console output, stops only its owned test and verifies turn cleanup/device restoration before reporting success. A stale build or another place's missing marker is rejected before Play. Reopen the newly built smoke file after source changes. Native test start/callback receipts retain the existing recovery behavior; never blindly rerun an ambiguous operation or delete journals to clear a refusal.
+
+`build/studio-smoke/report.json` points to the latest overall turn/runtime acceptance. Each attempt keeps its own `build/studio-smoke/<uuid>/report.json` and `runtime.json`, including probe/input/capture results and session cleanup. The verifier copies the overall report into its own run directory. Session files, images and `build/turns/` receipts retain ownership evidence. Missing configuration/bridge, assertion failures, timeouts and cleanup failures return nonzero. A built place alone is never native acceptance. If a turn is queued behind another owner, continue offline work; inspect/cancel your request using the queue tools before submitting another request.
+
+The smoke covers protocol readiness, loader dismissal, duplicate readiness, an initial counter snapshot, duplicate/stale/invalid increments, native button activation and matching client/server count. It currently targets one client with the reference feature enabled. Multiplayer, device-matrix visual review, persistence and public-server behavior remain separate acceptance tasks.

@@ -170,6 +170,25 @@ async function finishOwnedTurn(coordinator, token, verifier, recovery = false) {
 	const needsRecovery = recovery || coordinator.inspect().active?.phase === "recoveryRequired";
 	return needsRecovery ? coordinator.recover({ token }, verifier) : coordinator.release({ token }, verifier);
 }
+async function verifyTarget(client, studio, projectId) {
+	if (
+		String(studio.placeId) === projectId ||
+		new RegExp(`placeId:\\s*${projectId}\\b`).test(studio.name || "")
+	)
+		return;
+	// Local files are advertised by filename without a placeId. An explicitly
+	// selected unpublished target still needs native identity verification.
+	if (projectId !== "0" || !/\.rbxlx?$/i.test(studio.name || ""))
+		throw Error("Studio does not match configured place.");
+	const identity = decodeResult(
+		await client.call("execute_luau", {
+			studio_id: studio.id,
+			datamodel_type: "Edit",
+			code: "return game.HttpService:JSONEncode({robloxStudio=1,ok=true,placeId=tostring(game.PlaceId)})",
+		}),
+	);
+	if (identity.placeId !== "0") throw Error("Selected file is not an unpublished local place.");
+}
 async function run(file, options) {
 	const plan = readPlan(file);
 	const configuredPlaceId = require("./studio-config.cjs").read().expectedPlaceId;
@@ -263,11 +282,7 @@ async function run(file, options) {
 	try {
 		await client.connect();
 		const studio = chooseStudio(await client.call("list_roblox_studios"), options.studio, projectId);
-		if (
-			!new RegExp(`placeId:\\s*${projectId}\\b`).test(studio.name || "") &&
-			String(studio.placeId) !== projectId
-		)
-			throw Error("Studio does not match configured place.");
+		await verifyTarget(client, studio, projectId);
 		if (options.action !== "recover") {
 			await waitForContext(client, studio, "Edit");
 			record.device = await device.snapshot(client, studio);
@@ -293,9 +308,10 @@ async function run(file, options) {
 		process.stdout.write(
 			JSON.stringify({ released: true, evidence: record.file, commandPassed: !failure }) + "\n",
 		);
-		if (failure) throw failure;
+		if (failure) throw Object.assign(failure, { evidence: record.file, released: true });
 		return { released: true, evidence: record.file };
 	} catch (error) {
+		error.evidence = record.file;
 		try {
 			coordinator.markRecovery({
 				token: record.token,
@@ -340,4 +356,5 @@ module.exports = {
 	finishOwnedTurn,
 	run,
 	assertDead,
+	verifyTarget,
 };

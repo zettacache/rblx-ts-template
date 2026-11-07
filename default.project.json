@@ -9,6 +9,10 @@
   ],
   "tree": {
     "$className": "DataModel",
+    "StarterGui": {
+      "$className": "StarterGui",
+      "$properties": { "ScreenOrientation": "Sensor" }
+    },
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "TS": {
@@ -23,6 +27,9 @@
           "$className": "Folder",
           "@rbxts": {
             "$path": "node_modules/@rbxts"
+          },
+          "@rbxts-js": {
+            "$path": "node_modules/@rbxts-js"
           },
           "@flamework": {
             "$path": "node_modules/@flamework"

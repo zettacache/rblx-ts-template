@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "name": "Template handshake and counter",
+  "steps": [
+    { "kind": "probe", "context": "Server", "file": "smoke-ready.luau" },
+    { "kind": "probe", "context": "Client", "file": "smoke-client-ready.luau" },
+    {
+      "kind": "click",
+      "arguments": { "instance_path": "LocalPlayer.PlayerGui.ReferenceCounter.Card.Increment" }
+    },
+    { "kind": "probe", "context": "Client", "file": "smoke-clicked.luau" },
+    { "kind": "probe", "context": "Server", "file": "smoke-server-clicked.luau" },
+    { "kind": "screenshot", "arguments": {} }
+  ]
+}
