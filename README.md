@@ -77,7 +77,9 @@ npm run studio -- studios
 npm run test:pipelines
 ```
 
-Eight [project-scoped specialist roles](docs/team.md) cover Blender, art direction, UI, gameplay, tooling, independent pipeline review, QA and coordination. They inherit session settings and do not transfer Monster RNG's project-specific permissions or launch background work.
+Fifteen [project-scoped specialist roles](docs/team.md) cover design, engineering, content, presentation, device diagnosis, independent review and coordination. They inherit session settings and do not transfer Monster RNG's project-specific permissions or launch background work.
+
+Additional [focused verification and review tools](docs/tooling-additions.md) provide scoped source fingerprints, ready Studio verification batches, repeatable visual comparisons, asset inventory and optional owned Rojo serving.
 
 Uploads and live mutations require an appropriate task and configured target. Persistent native edits need project-owned mappings and a saved/exported backup; the game-specific whole-place importer was not copied. `clean` preserves unresolved Studio/upload recovery evidence. Blender recipes and source scenes selected for production belong under durable `assets/`, while `build/` remains scratch.
 

@@ -14,12 +14,13 @@ const write = (file, value) => {
 	fs.mkdirSync(path.dirname(file), { recursive: true });
 	fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n");
 };
-function sourceVersion(root = ROOT) {
-	const state = require("./tooling-snapshot.cjs").snapshot(root);
-	return crypto.createHash("sha256").update(JSON.stringify(state)).digest("hex");
+const { sourceEvidence, validateSourceFiles } = require("./studio-turn-source.cjs");
+function sourceVersion(root = ROOT, plan = {}) {
+	return sourceEvidence(root, plan).version;
 }
 function readPlan(file) {
 	const plan = JSON.parse(require("./text-files.cjs").readText(file));
+	validateSourceFiles(plan.sourceFiles, plan.sourceStable);
 	if (
 		!plan.operation ||
 		!Array.isArray(plan.command) ||
@@ -101,6 +102,66 @@ function registerSession(file) {
 	record.sessions = [...new Set([...(record.sessions || []), path.resolve(file)])];
 	write(recordFile, record);
 }
+function ownedTurnRecord() {
+	const file = process.env.STUDIO_TURN_RECORD;
+	if (!file) throw Error("Managed processes require STUDIO_TURN_RECORD.");
+	const record = JSON.parse(fs.readFileSync(file));
+	for (const [field, environment] of Object.entries({
+		token: "TOKEN",
+		owner: "OWNER",
+		task: "TASK",
+		studioId: "STUDIO",
+		projectId: "PROJECT",
+	})) {
+		if (!record[field] || record[field] !== process.env["STUDIO_RESERVATION_" + environment])
+			throw Error("Turn/process ownership mismatch.");
+	}
+	if (
+		!record.checkout ||
+		!require("./path-identity.cjs").samePath(record.checkout, ROOT) ||
+		!require("./path-identity.cjs").samePath(record.file, file)
+	)
+		throw Error("Turn/process checkout or record mismatch.");
+	return record;
+}
+function registerProcess(pid, label) {
+	if (!Number.isInteger(pid) || pid < 1 || typeof label !== "string" || !label.trim() || label.length > 2048)
+		throw Error("Managed process requires a positive PID and bounded label.");
+	const record = ownedTurnRecord();
+	const id = crypto.randomUUID();
+	record.managedProcesses = [
+		...(record.managedProcesses || []),
+		{ id, pid, label, state: "running", registeredAt: new Date().toISOString() },
+	];
+	write(record.file, record);
+	return id;
+}
+function finishProcess(id, { exitCode = null, signal = null } = {}) {
+	if (
+		(exitCode !== null && !Number.isInteger(exitCode)) ||
+		(signal !== null && (typeof signal !== "string" || !signal)) ||
+		(exitCode === null && signal === null)
+	)
+		throw Error("Managed process needs a confirmed exit code or signal.");
+	const record = ownedTurnRecord();
+	const row = (record.managedProcesses || []).find((item) => item.id === id);
+	if (!row) throw Error("Managed process does not belong to this turn.");
+	if (row.state === "exited") {
+		if (row.exitCode !== exitCode || row.signal !== signal)
+			throw Error("Managed process exit receipt mismatch.");
+		return;
+	}
+	if (row.state !== "running") throw Error("Managed process state is ambiguous.");
+	Object.assign(row, { state: "exited", exitCode, signal, exitedAt: new Date().toISOString() });
+	write(record.file, record);
+}
+function assertManagedProcessesStopped(record) {
+	for (const row of record.managedProcesses || []) {
+		if (row.state === "running") assertDead(row.pid, "Managed turn process " + row.label);
+		else if (row.state !== "exited") throw Error("Managed process state is ambiguous; cleanup refused.");
+	}
+}
+
 async function cleanupSessions(client, studio, sessions) {
 	for (const file of sessions) {
 		if (!fs.existsSync(file)) continue; // Registered before start; no session means start never happened.
@@ -125,6 +186,7 @@ async function cleanup(client, studio, record, plan) {
 	process.env.STUDIO_RESERVATION_CLEANUP = "1";
 	// Only existing marker-verified session ownership may stop a running test.
 	const latest = JSON.parse(fs.readFileSync(record.file));
+	assertManagedProcessesStopped(latest);
 	if (latest.commandState === "running") assertDead(latest.childPid, "Turn child process");
 	const project = JSON.parse(fs.readFileSync(path.join(ROOT, "default.project.json")));
 	if (await require("./port-listener.cjs").listening(project.servePort || 34872))
@@ -146,7 +208,7 @@ async function cleanup(client, studio, record, plan) {
 		}),
 	);
 	if (probe.clean !== true) throw Error("Operation-specific cleanup probe did not confirm cleanup.");
-	if (plan.sourceStable !== false && sourceVersion() !== record.sourceVersion)
+	if (plan.sourceStable !== false && sourceVersion(ROOT, plan) !== record.sourceVersion)
 		throw Error("Source changed during the turn; acceptance invalid, inspect before release.");
 	const proof = {
 		studioId: studio.id,
@@ -212,7 +274,7 @@ async function run(file, options) {
 			operation: plan.operation,
 			checkout: ROOT,
 			evidencePath: path.join(ROOT, "build", "turns", requestId + ".json"),
-			sourceVersion: sourceVersion() + ":" + plan.digest,
+			sourceVersion: sourceVersion(ROOT, plan) + ":" + plan.digest,
 			requirements: ["syncStopped"],
 		});
 	}
@@ -236,7 +298,7 @@ async function run(file, options) {
 			!queued ||
 			!require("./path-identity.cjs").samePath(queued.checkout, ROOT) ||
 			queued.operation !== plan.operation ||
-			queued.sourceVersion !== sourceVersion() + ":" + plan.digest
+			queued.sourceVersion !== sourceVersion(ROOT, plan) + ":" + plan.digest
 		)
 			throw Error("Queued checkout, source, or plan changed. Cancel and requeue the reviewed turn.");
 		const project = JSON.parse(fs.readFileSync(path.join(ROOT, "default.project.json")));
@@ -260,7 +322,7 @@ async function run(file, options) {
 			checkout: ROOT,
 			controllerPid: process.pid,
 			planDigest: plan.digest,
-			sourceVersion: sourceVersion(),
+			sourceVersion: sourceVersion(ROOT, plan),
 			sessions: [],
 			startedAt: new Date().toISOString(),
 		};
@@ -329,7 +391,7 @@ async function run(file, options) {
 async function main(argv = process.argv.slice(2)) {
 	if (!argv.length || argv.includes("--help"))
 		return console.log(
-			"studio-turn request|run|recover <plan.json> --studio ID --request ID --owner ID --task ID [--record original.json]\nRequest is idempotent; run acquires only the queue head, verifies Edit/device state, runs argv without shell, verifies cleanup, then releases. Recover never adopts another test.",
+			"studio-turn request|run|recover <plan.json> --studio ID --request ID --owner ID --task ID [--record original.json]\nRequest is idempotent; run acquires only the queue head, verifies Edit/device state, runs argv without shell, verifies cleanup, then releases. Recover never adopts another test. Optional sourceFiles pins exact repository files plus mappings/config; omitted scope retains the full snapshot.",
 		);
 	const [action, file, ...args] = argv;
 	if (!["request", "run", "recover"].includes(action)) throw Error("Unknown turn action.");
@@ -348,6 +410,9 @@ if (require.main === module)
 	});
 module.exports = {
 	sourceVersion,
+	registerProcess,
+	finishProcess,
+	assertManagedProcessesStopped,
 	readPlan,
 	registerSession,
 	childCommand,

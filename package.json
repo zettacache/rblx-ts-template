@@ -37,7 +37,11 @@
     "studio:assets": "node scripts/studio-assets.cjs",
     "studio:mesh": "node scripts/studio-mesh-assets.cjs",
     "test:pipelines": "node scripts/test-pipelines.mjs",
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "studio:verify-batch": "node scripts/studio-verify-batch.cjs",
+    "studio:visual-review": "node scripts/studio-visual-review.cjs",
+    "audit:assets": "node scripts/release-asset-audit.cjs",
+    "serve:owned": "node scripts/rojo-serve.cjs"
   },
   "engines": {
     "node": "24.22.1",

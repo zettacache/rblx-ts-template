@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "sourceRepository": "monster-rng",
+  "description": "Inspected source bytes before project-specific adaptation; no live state or source permissions transferred.",
+  "files": [
+    {
+      "source": "scripts/studio-turn-source.cjs",
+      "sourceSha256": "b1307efe9758e6c854b3cf06ba90df22fb2be3f6ffa1318b468167ba0daf0b3d",
+      "destination": "scripts/studio-turn-source.cjs"
+    },
+    {
+      "source": "scripts/studio-verify-batch.cjs",
+      "sourceSha256": "2578344b739f2cd17c9860a3ce6bc16820bf6aed08547ae4f0bd5bf5d59068a8",
+      "destination": "scripts/studio-verify-batch.cjs"
+    },
+    {
+      "source": "scripts/studio-verification-gate.cjs",
+      "sourceSha256": "3028bfd477e2b21f9bc47c603ef08fe96c610d9ff9f0225e637d98e5e4cc2468",
+      "destination": "scripts/studio-verification-gate.cjs"
+    },
+    {
+      "source": "scripts/release-asset-audit.cjs",
+      "sourceSha256": "5a86772955d663f8a8b03411049c01292de979177859a2b624fb42e6fd343f65",
+      "destination": "scripts/release-asset-audit.cjs"
+    },
+    {
+      "source": "scripts/rojo-serve.cjs",
+      "sourceSha256": "f1e6fa3f11a3be13a1f88ee40e05da308a470a72e62ae8b0c56845fe45d74836",
+      "destination": "scripts/rojo-serve.cjs"
+    },
+    {
+      "source": "scripts/test-studio-turn-source.cjs",
+      "sourceSha256": "95194163af60935e2fa32cd67ac9cfed70db724b21a1c0d928c1b3dfd2c5a601",
+      "destination": "scripts/test-studio-turn-source.cjs"
+    },
+    {
+      "source": "scripts/test-studio-verify-batch.cjs",
+      "sourceSha256": "b110820db5c0543f16b30c509a5a5d51652a40e5b7e6271d788fb5af76f474f7",
+      "destination": "scripts/test-studio-verify-batch.cjs"
+    },
+    {
+      "source": "scripts/test-release-asset-audit.cjs",
+      "sourceSha256": "551fdb068b0862b058834992908e0af20c0889cd3be10a206c545c1d8b7f2dec",
+      "destination": "scripts/test-release-asset-audit.cjs"
+    },
+    {
+      "source": "scripts/test-rojo-serve.cjs",
+      "sourceSha256": "f38763ae901da0f98cc65f763c1d10ad6541f54616354a33b5d7c7dc9ba50d84",
+      "destination": "scripts/test-rojo-serve.cjs"
+    },
+    {
+      "source": ".codex/agents/lead_game_designer.toml",
+      "sourceSha256": "af04b4cafd985c2a83b7577754ee2362decde8db8c1dcacb75822365d2575801",
+      "destination": ".codex/agents/lead_game_designer.toml"
+    },
+    {
+      "source": ".codex/agents/systems_designer.toml",
+      "sourceSha256": "7b73b45b0a35fc247edae2025dff147c3768c9bdf8517460cc2616d7f299402e",
+      "destination": ".codex/agents/systems_designer.toml"
+    },
+    {
+      "source": ".codex/agents/audio_vfx_designer.toml",
+      "sourceSha256": "18bfb7e979bd1c01bbab8cb0be8cadb6c54cc8ba2c7e865ada88174431acee82",
+      "destination": ".codex/agents/audio_vfx_designer.toml"
+    },
+    {
+      "source": ".codex/agents/level_designer.toml",
+      "sourceSha256": "bcab42d81e8e31e13ff0ba004f0da71968561893af56381c7708d187420c297d",
+      "destination": ".codex/agents/level_designer.toml"
+    },
+    {
+      "source": ".codex/agents/device_test_specialist.toml",
+      "sourceSha256": "5ea5994fc0281063aaca1b3717152f11ec8cc5c042bf4293242f97d8cb65cd9b",
+      "destination": ".codex/agents/device_test_specialist.toml"
+    },
+    {
+      "source": ".codex/agents/monster_designer.toml",
+      "sourceSha256": "0fbf646679c9a2e140b5dbe747fdbbee6ac2483541eb003866286e639d7c36e3",
+      "destination": ".codex/agents/monster_designer.toml"
+    },
+    {
+      "source": ".codex/agents/guardian_designer.toml",
+      "sourceSha256": "671d26bed06177900234f214062174c78ca9c3acd5a39d1bc966c1504469c602",
+      "destination": ".codex/agents/guardian_designer.toml"
+    },
+    {
+      "source": ".codex/team/templates.md",
+      "sourceSha256": "e42e672055d50ec0980acd76f2e8fca263425f22bdb8467d2e8ab8477cd7b3ba",
+      "destination": "docs/team/templates.md"
+    },
+    {
+      "source": ".codex/team/scenarios.md",
+      "sourceSha256": "7dbda8ae73a4d51b939144d38271d6a386caca76973466fd5034619a6d64357f",
+      "destination": "docs/team/scenarios.md"
+    },
+    {
+      "source": "scripts/studio-visual-review.cjs",
+      "sourceSha256": "e12a6ca4c9cc26ac9b545bc26623edcf97787502fce2ddee5f34af184d394e26",
+      "destination": "scripts/studio-visual-review.cjs"
+    },
+    {
+      "source": "scripts/test-visual-review.cjs",
+      "sourceSha256": "5f1a245a8545ea2acda286035ef1d1107eca68f65e3993d55e3bef2b30f4a893",
+      "destination": "scripts/test-visual-review.cjs"
+    },
+    {
+      "source": "scripts/studio-turn.cjs",
+      "sourceSha256": "213cc12fee5e6450c91a69de55ef7ec3d8d2fde2752b13c894dd5f065ff32a7a",
+      "destination": "scripts/studio-turn.cjs",
+      "note": "Selected managed-process helpers only; existing mini-clans implementation retained."
+    }
+  ]
+}

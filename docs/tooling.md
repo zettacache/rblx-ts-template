@@ -2,6 +2,8 @@
 
 These commands are generalized from Monster RNG. Source-byte provenance is recorded in `docs/provenance/monster-rng-tooling.json`. Only reusable tooling and neutral test fixtures were extracted. Game scripts, content/assets, production IDs, authorizations, secrets, live receipts and historical handoffs are not part of the template.
 
+The [focused verification and review guide](tooling-additions.md) covers the subsequent extraction: scoped source fingerprints, ready Studio verification batches, repeatable visual reviews, offline asset inventory and optional owned Rojo serving. These additions preserve the existing Blender, retargeting and verification workflows; their source hashes are recorded separately in `docs/provenance/monster-rng-additions.json`.
+
 ## Blender
 
 Install Blender separately; use `BLENDER_EXE` for a specific executable, otherwise the runner discovers an installed Windows version or `blender` on PATH. The worker uses Blender's own Python and needs no system Python or pip packages. Recipes are trusted executable Python, not sandboxed data.

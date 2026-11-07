@@ -12,6 +12,15 @@ The project-scoped roles in `.codex/agents/` are adapted from Monster RNG's usef
 | `blender_artist`          | Editable geometry, rigs, animation and render iteration        |
 | `art_director`            | References, silhouettes, materials, visual acceptance          |
 | `ui_ux_designer`          | Reading order, responsive UI and native visual review          |
+| `lead_game_designer`      | Player problems, bounded briefs and observable acceptance      |
+| `systems_designer`        | Reproducible progression, combat, RNG and economy analysis     |
+| `audio_vfx_designer`      | Coherent feedback, reduced motion, audio and performance       |
+| `level_designer`          | Editable environments, navigation and layout review            |
+| `device_test_specialist`  | Native input/device diagnosis, capture and restoration         |
+| `monster_designer`        | Collectible/companion art and content integration              |
+| `guardian_designer`       | Enemy art, content and encounter presentation                  |
+
+The last two names identify optional content lanes and do not prescribe the game's genre. The roles inherit session settings and only execute assigned work. Use the [compact briefs and decision records](team/templates.md) and [team behavior probes](team/scenarios.md) when useful; these complement the existing assignment and evidence handoffs below.
 
 Files follow the [official custom-agent format](https://learn.chatgpt.com/docs/agent-configuration/subagents). Fresh project sessions can discover these roles. Existing sessions may need to restart/reload before they appear; installing TOML files does not prove a custom role has run.
 
