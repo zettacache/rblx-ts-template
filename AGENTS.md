@@ -20,6 +20,12 @@ Read docs/tooling.md for asset/Studio commands and docs/team.md for optional spe
 - Live Studio commands must use the configured target and matching studio:turn reservation. Stop Rojo before authoring; never adopt another owner's test or blindly retry an ambiguous mutation.
 - Keep editable asset sources durable. Do not erase unresolved receipts/journals to bypass a refused clean command.
 
+## Presentation quality
+
+- Before player-facing UI, modeling, animation, VFX or SFX work, read `docs/art-direction/README.md`. Use `docs/art-direction/feature-brief.md` to record the chosen direction and acceptance evidence beside the feature sources.
+- Establish a coherent project identity from references; use `docs/ui/style-lab/` as a worked example, not a mandatory genre or finished native component library. Preserve shared shape, palette, material, typography and timing decisions across disciplines.
+- Review combined feedback, readability, touch/controller states, reduced motion, muted audio, repeated effects and target-device performance. Keep editable sources durable; distinguish HTML concepts, offline builds and actual Studio visual/audio evidence. Do not claim polish from compilation alone.
+
 ## Commits and chat completion
 
 - Auto-commit completed, verified work in this project without asking for commit confirmation, unless the user requests otherwise. Commit at coherent completion points; run the checks appropriate to the change first.
