@@ -34,6 +34,16 @@ For example, an upgrade can always show **current value → next value**, its co
 
 Write a small project style contract: outline weights, corner/proportion families, lighting direction on icons, font roles, surface depth, palette meanings, density and motion character. Review whether components obey that contract. Do not inherit the crafted-adventure tokens merely because they are the first example in this repository.
 
+## Match fidelity across the whole screen
+
+UI, icons and featured illustrations must feel authored together. Pick a common level of detail and a common rendering language before producing assets. Compare contour weight at displayed size, shape proportions, perspective, light direction, shading steps, highlight shape, texture density and saturation. A shared palette alone does not make a glossy rendered object belong beside simple diagram-like icons.
+
+Polish is resolution of the chosen style, not the amount of detail. A simple interface can be polished through precise alignment, spacing, type, states and consistent forms. When the UI uses broad surfaces and simple shading, simplify assets to the same language. Highly detailed assets belong with comparably resolved UI surfaces and supporting icons; do not use one elaborate illustration to compensate for an underdeveloped interface. If the desired direction is richer, develop the UI and the whole icon family together.
+
+Hero art can be larger and more expressive without changing styles. Add composition and scale before adding texture or a different lighting model. Review a representative button, card, small icon and hero asset together at native desktop and phone sizes. Reject a combination that feels like assets pasted from different packs, even when each piece is attractive alone. Record the selected fidelity target and any intentional exception in the feature brief.
+
+The [Robux shop example](../ui/robux-shop/index.html) applies this by composing its treasure hero from the same SVG symbols used in cards, tabs and balance displays. Its earlier glossy rendered chest is retained as historical source, not the active style reference.
+
 ## A shared visual grammar within a game
 
 | Decision       | Example default                              | Purpose                                  |

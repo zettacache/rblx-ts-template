@@ -12,6 +12,7 @@ Copy this file beside the feature's editable sources. Replace prompts with decis
 - Concepts considered / selected direction and reason:
 - Palette roles / type family and scale / shape and material rules:
 - Style contract: outline weights, corner/proportion families, icon lighting, surface depth, density, motion character; primary/secondary attention budget:
+- Shared fidelity target: shading steps, highlight shapes, texture/detail density, perspective and contour weight at display size; compare a button, card, small icon and hero together on desktop/phone; justify any exception:
 - UI: desktop/touch/controller, safe areas, localization, selected/focus/pending/error/empty states:
 - Models: dimensions, silhouette at camera distance, origin/axes, collision, materials, measured geometry/texture budget:
 - Animation: rig, poses, duration, loop/priority/blends, markers, foot contact, interruption and cleanup:
