@@ -14,7 +14,27 @@ Collect 6–12 references across interface, world, character, motion and sound. 
 
 Compare two or three small concepts before selecting one. Explain the choice using player readability, personality and production cost. Save editable sources and rejected concepts under the feature's `docs/ui/` or `assets/` directory. Do not block an authorized task waiting for optional references: label assumptions and make the first direction reviewable.
 
-## A shared visual grammar
+The [reference library](references/README.md) records observations separately from interpretations and decisions. Start with the user's supplied references; do not assume that every visible detail is endorsed. Extract transferable principles before choosing their visual expression. A static image does not establish interaction quality, motion, sound, mobile behavior or commercial results.
+
+## Quality principles and style choices
+
+Polish comes from deliberate hierarchy, consistency, legibility, feedback and fit to the player task. It does not require a quiet palette or sparse composition. A dense, saturated arcade interface can be well crafted; a minimal interface can be confusing. Judge each against its intended experience.
+
+| Keep across games                                         | Choose for each game's identity                                      |
+| --------------------------------------------------------- | -------------------------------------------------------------------- |
+| The next action is easy to find                           | Saturated spectacle, muted atmosphere or something between           |
+| Text and controls separate from the scene                 | Outlines, solid panels, restrained translucency or local scrims      |
+| Component anatomy and state meanings repeat               | Chunky bevels, illustrated frames, flat surfaces or fine borders     |
+| Icons read at their actual display size                   | Glossy cartoon objects, simple glyphs or painted motifs              |
+| Numbers reveal a decision and its consequence             | Playful display type, utilitarian sans serif or editorial typography |
+| Feedback is timely and proportionate                      | Elastic bounce, mechanical snap or soft dissolve                     |
+| Important information survives color/audio/motion changes | Theme-specific palette, sound palette and effect language            |
+
+For example, an upgrade can always show **current value → next value**, its cost, and availability in stable positions. An arcade game might express this with ivory cards, bold outlined numbers and raised green buttons; a cozy game with paper labels and a soft pressed state; a science-fiction game with aligned instrument readouts and crisp focus frames. Preserve the decision structure while changing the visual vocabulary together.
+
+Write a small project style contract: outline weights, corner/proportion families, lighting direction on icons, font roles, surface depth, palette meanings, density and motion character. Review whether components obey that contract. Do not inherit the crafted-adventure tokens merely because they are the first example in this repository.
+
+## A shared visual grammar within a game
 
 | Decision       | Example default                              | Purpose                                  |
 | -------------- | -------------------------------------------- | ---------------------------------------- |
@@ -33,7 +53,9 @@ These are art starting points, not engine performance limits or accessibility ce
 
 ## Interface
 
-Give each screen one dominant task and a clear reading order. Align related content, group with space before adding borders, and keep secondary chrome quieter than the selected object. Use one type family with two weights; favor real typography over outlines, gradients and permanent glow. Use icons from one family with consistent visual weight. Make the selected, hovered, pressed, focused, disabled and pending states distinguishable. Preserve controller focus and offer touch equivalents for hover information.
+Give each screen one dominant task and a clear reading order. Align related content and use space, surface contrast and borders deliberately to show grouping. Establish a small set of font roles; outlines, gradients and bevels are valid when they belong to the chosen style and preserve readable letterforms. Keep border weight, shadow direction, corner treatment and icon lighting consistent. Use icons from one family with consistent visual weight. Make the selected, hovered, pressed, focused, disabled and pending states distinguishable. Preserve controller focus and offer touch equivalents for hover information.
+
+Dense screens need an attention budget. Identify the main action, progression information, navigation and optional promotions, then verify that secondary accents do not overwhelm the main task. Repeated upgrade rows should place icon, title, current/next values, level and price in predictable locations. Show locked, unaffordable, available and pending states with words or symbols as well as color. Do not scale an entire desktop HUD down to fit a phone: preserve the main action and reorganize supporting information into panels, tabs or drawers appropriate to the game.
 
 Design empty, loading, error, full, long-name and maximum-value states. State what happened and how to recover. Keep currency values legible; distinguish price, balance and reward. Reserve room for translated text. Keep Roblox menus and device safe areas clear. Long lists need scrolling and an intentional selection policy. Do not let decorative animation delay input or hide essential feedback.
 

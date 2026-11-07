@@ -7,8 +7,11 @@ Copy this file beside the feature's editable sources. Replace prompts with decis
 - Three style adjectives / three exclusions:
 - Primary focal point / reading order:
 - References: source, creator, local reference path where permitted, principle to borrow, things to avoid:
+- Reference evidence: directly visible observations, inferred benefits, unknown behavior; do not assume every pictured detail is a user preference:
+- Transferable quality principle / chosen expression for this game / a different valid expression:
 - Concepts considered / selected direction and reason:
 - Palette roles / type family and scale / shape and material rules:
+- Style contract: outline weights, corner/proportion families, icon lighting, surface depth, density, motion character; primary/secondary attention budget:
 - UI: desktop/touch/controller, safe areas, localization, selected/focus/pending/error/empty states:
 - Models: dimensions, silhouette at camera distance, origin/axes, collision, materials, measured geometry/texture budget:
 - Animation: rig, poses, duration, loop/priority/blends, markers, foot contact, interruption and cleanup:
