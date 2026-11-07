@@ -13,6 +13,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const { validate, xml, identity } = require("./studio-animation.cjs");
 const blender = require("./blender.cjs");
+const blenderCache = require("./blender-cache.cjs");
 const assets = require("./studio-assets.cjs");
 function temp(t) {
 	const p = fs.mkdtempSync(path.join(os.tmpdir(), "roblox-assets-"));
@@ -102,6 +103,21 @@ test("Blender job validation bounds render/frame sizes and resolves source files
 		/60 seconds/,
 	);
 });
+
+test("render performance settings validate without changing review coverage", (t) => {
+	const dir = temp(t);
+	fs.writeFileSync(path.join(dir, "recipe.py"), "pass");
+	const job = { version: 1, name: "Fixture", script: "recipe.py" };
+	assert.equal(blender.validate(job, dir).persistentData, true);
+	assert.equal(blender.validate({ ...job, persistentData: false, renderThreads: 2 }, dir).renderThreads, 2);
+	assert.throws(() => blender.validate({ ...job, persistentData: "true" }, dir), /boolean/);
+	assert.throws(() => blender.validate({ ...job, renderThreads: 0 }, dir), /1..256/);
+	assert.throws(() => blender.validate({ ...job, renderThreads: 1.5 }, dir), /1..256/);
+	const full = blender.profile(blender.validate(job, dir));
+	assert.deepEqual(full.formats, ["glb", "fbx"]);
+	assert.deepEqual(full.views, ["front", "back", "iso"]);
+	assert.equal(full.renderSamples, 24);
+});
 test("headless process errors and timeouts fail with a diagnostic log", async (t) => {
 	const dir = temp(t);
 	await assert.rejects(
@@ -174,6 +190,11 @@ test("Blender reuse verifies and copies every artifact, including recipe mesh ou
 	assert.notEqual(first.output, hit.output);
 	assert.ok(hit.cache.artifacts["Body.mesh.json"]);
 	assert.deepEqual(
+		hit.cache.artifacts,
+		blenderCache.inventory(hit.output),
+		"copied job paths retain accurate descriptors without rehashing every output",
+	);
+	assert.deepEqual(
 		Object.keys(hit.artifacts),
 		["scene.blend", "model.glb", "model.fbx", "front.png"],
 		"preserve the promoted-artifact contract",
@@ -207,6 +228,20 @@ test("Blender cache invalidates for source, dependency, executable and preview p
 	await blender.run(f.file, { reuse: true, profile: "preview" }, f.runtime);
 	assert.equal(f.calls, 5);
 	assert.throws(() => blender.profile({}, "typo"), /Profile/);
+});
+
+test("render memory and thread settings participate in cache identity", async (t) => {
+	const f = blenderFixture(t);
+	await blender.run(f.file, { reuse: true, persistentData: false }, f.runtime);
+	await blender.run(f.file, { reuse: true, persistentData: true }, f.runtime);
+	await blender.run(f.file, { reuse: true, persistentData: true, threads: 2 }, f.runtime);
+	const hit = await blender.run(f.file, { reuse: true, persistentData: true, threads: 2 }, f.runtime);
+	assert.equal(f.calls, 3);
+	assert.equal(hit.cache.reused, true);
+	const job = JSON.parse(fs.readFileSync(path.join(hit.output, "job.json")));
+	assert.equal(job.renderThreads, 2);
+	assert.equal(job.persistentData, true);
+	assert.deepEqual(hit.cache.artifacts, blenderCache.inventory(hit.output));
 });
 test("Blender failed runs and dependencies changing mid-run never publish reusable success", async (t) => {
 	const f = blenderFixture(t),

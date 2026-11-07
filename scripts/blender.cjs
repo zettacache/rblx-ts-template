@@ -78,6 +78,13 @@ function validate(doc, base) {
 		throw Error("dependencies must be file paths.");
 	result.dependencies = result.dependencies.map((p) => path.resolve(base, p));
 	for (const p of result.dependencies) if (!fs.statSync(p).isFile()) throw Error("Missing dependency: " + p);
+	result.persistentData = doc.persistentData ?? true;
+	if (typeof result.persistentData !== "boolean") throw Error("persistentData must be boolean.");
+	if (
+		doc.renderThreads !== undefined &&
+		(!Number.isInteger(doc.renderThreads) || doc.renderThreads < 1 || doc.renderThreads > 256)
+	)
+		throw Error("renderThreads must be 1..256.");
 	if (doc.animation) {
 		const a = doc.animation;
 		if (
@@ -152,12 +159,24 @@ async function run(file, options = {}, runtime = {}) {
 		validate(require("./text-files.cjs").readJson(file), path.dirname(path.resolve(file))),
 		options.profile,
 	);
+	if (options.threads !== undefined) {
+		if (!Number.isInteger(options.threads) || options.threads < 1 || options.threads > 256)
+			throw Error("--threads must be 1..256.");
+		job.renderThreads = options.threads;
+	}
+	if (options.persistentData !== undefined) {
+		if (typeof options.persistentData !== "boolean") throw Error("persistentData must be boolean.");
+		job.persistentData = options.persistentData;
+	}
 	const executable = runtime.executable || discover();
+	const identityStarted = performance.now();
 	const identity = (runtime.executableIdentity || executableIdentity)(executable);
+	const identityMs = performance.now() - identityStarted;
 	const root = runtime.root || path.join(ROOT, "build", "blender");
 	const output = path.join(root, job.name + "-" + randomUUID());
 	fs.mkdirSync(output, { recursive: true });
-	const worker = path.join(__dirname, "blender", "worker.py");
+	const inputHashStarted = performance.now();
+	const worker = runtime.worker || path.join(__dirname, "blender", "worker.py");
 	const workerBytes = fs.readFileSync(worker),
 		workerSha256 = sha(workerBytes);
 	const sourceBytes = Object.fromEntries(
@@ -174,18 +193,29 @@ async function run(file, options = {}, runtime = {}) {
 			...pipelineIdentity,
 		}),
 	);
+	const inputHashMs = performance.now() - inputHashStarted;
+	let cacheLookupMs = 0;
 	if (options.reuse) {
+		const cacheStarted = performance.now();
 		const cached = cache.reuse(root, key, output);
+		cacheLookupMs = performance.now() - cacheStarted;
 		if (cached) {
 			const copiedJob = JSON.parse(fs.readFileSync(path.join(output, "job.json")));
 			for (const field of ["script", "blend"])
 				if (copiedJob[field])
 					copiedJob[field] = path.join(output, field === "script" ? "source.py" : "input.blend");
-			fs.writeFileSync(path.join(output, "job.json"), JSON.stringify(copiedJob, null, 2));
+			const jobBytes = Buffer.from(JSON.stringify(copiedJob, null, 2));
+			fs.writeFileSync(path.join(output, "job.json"), jobBytes);
 			const manifest = {
 				...cached,
-				cache: { ...cached.cache, artifacts: cache.inventory(output) },
-				timings: { totalMs: performance.now() - started },
+				cache: {
+					...cached.cache,
+					artifacts: {
+						...cached.cache.artifacts,
+						"job.json": { bytes: jobBytes.length, sha256: sha(jobBytes) },
+					},
+				},
+				timings: { identityMs, inputHashMs, cacheLookupMs, totalMs: performance.now() - started },
 				buildTimings: cached.buildTimings || cached.timings,
 			};
 			fs.writeFileSync(path.join(output, "manifest.json"), JSON.stringify(manifest, null, 2));
@@ -220,6 +250,7 @@ async function run(file, options = {}, runtime = {}) {
 	const launchStarted = performance.now();
 	await (runtime.launch || launch)(executable, args, path.join(output, "blender.log"));
 	const blenderMs = performance.now() - launchStarted;
+	const verificationStarted = performance.now();
 	for (const [p, hash] of Object.entries(dependencies))
 		if (sha(fs.readFileSync(p)) !== hash) throw Error("Dependency changed during Blender run: " + p);
 	const report = JSON.parse(fs.readFileSync(path.join(output, "report.json")));
@@ -227,15 +258,16 @@ async function run(file, options = {}, runtime = {}) {
 	// Keep the existing promoted-artifact contract; cache inventory also covers
 	// recipe outputs and frozen inputs, which promotion scripts need not copy.
 	const artifacts = {};
+	// Hash the completed output tree once; the promoted subset and cache share those verified descriptors.
+	const inventory = cache.inventory(output);
 	for (const name of [
 		"scene.blend",
 		...job.formats.map((x) => `model.${x}`),
 		...job.views.map((x) => `${x}.png`),
 		...(job.animation ? ["animation.json", ...[0, 1, 2, 3].map((i) => `motion-${i}.png`)] : []),
 	]) {
-		const bytes = fs.readFileSync(path.join(output, name));
-		if (!bytes.length) throw Error(`Empty Blender artifact: ${name}`);
-		artifacts[name] = { bytes: bytes.length, sha256: sha(bytes) };
+		if (!inventory[name]?.bytes) throw Error(`Empty or missing Blender artifact: ${name}`);
+		artifacts[name] = inventory[name];
 	}
 	if (job.animation)
 		require("./studio-animation.cjs").validate(
@@ -251,8 +283,15 @@ async function run(file, options = {}, runtime = {}) {
 		artifacts,
 		report,
 		reviewProfile: job.reviewProfile,
-		cache: { key, reused: false, artifacts: cache.inventory(output) },
-		timings: { blenderMs, totalMs: performance.now() - started },
+		cache: { key, reused: false, artifacts: inventory },
+		timings: {
+			identityMs,
+			inputHashMs,
+			cacheLookupMs,
+			blenderMs,
+			verificationMs: performance.now() - verificationStarted,
+			totalMs: performance.now() - started,
+		},
 	};
 	cache.publish(root, key, output, manifest);
 	return { output, ...manifest };
@@ -260,7 +299,7 @@ async function run(file, options = {}, runtime = {}) {
 async function main(argv = process.argv.slice(2)) {
 	if (!argv.length || argv[0] === "--help")
 		return console.log(
-			"blender.cjs doctor | run <job.json> [--profile full|preview] [--reuse]\n--reuse asserts deterministic inputs; declare external files in job.dependencies. Outputs are copied into fresh build/blender folders. Preview is iteration evidence only.",
+			"blender.cjs doctor | run <job.json> [--profile full|preview] [--reuse] [--threads 1..256] [--no-persistent-data]\n--reuse asserts deterministic inputs; declare external files in job.dependencies. Outputs are copied into fresh build/blender folders. Preview is iteration evidence only.",
 		);
 	if (argv[0] === "doctor" && argv.length === 1) {
 		const executable = discover(),
@@ -276,6 +315,10 @@ async function main(argv = process.argv.slice(2)) {
 	const options = {};
 	for (let i = 2; i < argv.length; i++) {
 		if (argv[i] === "--reuse" && !options.reuse) options.reuse = true;
+		else if (argv[i] === "--threads" && options.threads === undefined && argv[i + 1])
+			options.threads = Number(argv[++i]);
+		else if (argv[i] === "--no-persistent-data" && options.persistentData === undefined)
+			options.persistentData = false;
 		else if (argv[i] === "--profile" && !options.profile && ["full", "preview"].includes(argv[i + 1]))
 			options.profile = argv[++i];
 		else throw Error("Unknown or repeated Blender option: " + argv[i]);

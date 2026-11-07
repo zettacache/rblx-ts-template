@@ -75,3 +75,36 @@ test("preflight rejects all work before launch and records individual worker fai
 	await assert.rejects(batch(f.file, {}, runtime), /version/);
 	assert.equal(launches, 3);
 });
+
+test("parallel jobs divide available threads and respect explicit job and CLI limits", async (t) => {
+	const f = fixture(t);
+	const job = JSON.parse(fs.readFileSync(path.join(f.dir, "B.json")));
+	fs.writeFileSync(path.join(f.dir, "B.json"), JSON.stringify({ ...job, renderThreads: 3 }));
+	const seen = [];
+	const runtime = {
+		executable: "mock",
+		cpuCount: () => 8,
+		executableIdentity: () => ({}),
+		reportRoot: f.dir,
+		run: async (_file, options) => {
+			seen.push(options.threads);
+			return { output: "fixture", cache: { reused: false } };
+		},
+	};
+	const result = await batch(f.file, { jobs: 2, threads: "auto" }, runtime);
+	assert.deepEqual(result.threadsPerJob, [4, 3, 4]);
+	assert.deepEqual(seen, [4, 3, 4]);
+	seen.length = 0;
+	const automatic = await batch(f.file, { jobs: 2 }, runtime);
+	assert.deepEqual(automatic.threadsPerJob, [null, 3, null]);
+	assert.deepEqual(seen, [undefined, 3, undefined]);
+	seen.length = 0;
+	await batch(f.file, { jobs: 2, threads: 2 }, runtime);
+	assert.deepEqual(seen, [2, 2, 2]);
+	await assert.rejects(batch(f.file, { threads: 0 }, runtime), /threads/);
+	await assert.rejects(batch(f.file, { persistentData: "yes" }, runtime), /boolean/);
+	fs.writeFileSync(f.file, JSON.stringify({ version: 1, jobs: ["A.json"] }));
+	const one = await batch(f.file, { jobs: 4, threads: "auto" }, runtime);
+	assert.equal(one.workerCount, 1);
+	assert.deepEqual(one.threadsPerJob, [8]);
+});

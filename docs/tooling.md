@@ -13,16 +13,18 @@ npm run blender -- run scripts/blender/examples/companion.json --profile full
 npm run blender:batch -- scripts/blender/examples/batch.json --profile preview --reuse --jobs 1
 ```
 
-A job declares a script and/or `.blend`, export formats, views, size and optional animation. Paths resolve relative to the job JSON. A batch declares `version: 1` and a `jobs` array of paths relative to the batch file. Jobs run in separate background Blender processes; the default one worker avoids oversubscribing CPU render threads. `--jobs 2` through `4` is available when measured resource limits permit it. Every job is preflighted before any starts. A batch reports every success/failure in input order and exits nonzero on failure. It probes/hashes the Blender executable once for the batch.
+A job declares a script and/or `.blend`, export formats, views, size and optional animation. Paths resolve relative to the job JSON. A batch declares `version: 1` and a `jobs` array of paths relative to the batch file. Jobs run in separate background Blender processes with automatic render threading by default. With `--threads auto`, unspecified render threads are divided across the workers using the available logical CPU count. A job `renderThreads` overrides that automatic budget; a numeric CLI `--threads 1..256` overrides both. The budget controls render threads, not an operating-system CPU quota, and can be slower for some workloads. Every job is preflighted before any starts. A batch reports every success/failure in input order and exits nonzero on failure. It probes/hashes the Blender executable once for the batch.
 
 - Full review uses the requested resolution and 24 CPU Cycles samples; preview caps size at 256 pixels and uses 8 samples. Geometry, requested formats/views, and animation samples are preserved.
+- Cycles persistent render data is enabled within each job to reuse scene data across views and motion frames. It uses more memory until that isolated Blender process exits. Use job `persistentData: false` or CLI `--no-persistent-data` to disable it. See [Blender's performance documentation](https://docs.blender.org/manual/en/latest/render/cycles/render_settings/performance.html).
+- Manifests separate executable identity, input hashing, cache lookup, Blender process, and verification timings. Worker reports separate scene build, export, static renders and motion renders. Cache-hit timings describe the copy/verification work; original build timings are retained separately.
 - Each job freezes its recipe, input blend and worker into a fresh UUID output directory under `build/blender`. Outputs include editable `scene.blend`, FBX/GLB, PNG views, optional sampled animation JSON, log, report and SHA-256 manifest.
 - `--reuse` is an explicit assertion that the recipe is deterministic. Declare all external input files in `dependencies`. Keys include normalized job settings, input/dependency hashes, Blender path/version/binary hash, worker, runner, cache, animation validator and text-reader hashes.
 - Reuse verifies the complete cached inventory and copies files into a new directory. No hard links or mutation of the cached source. Missing, corrupt or incomplete outputs rebuild; failed jobs never publish a reusable success.
 - Pack images into input blends and make linked libraries local. Preserve pivots, scale and export names. Preview renders are iteration evidence; inspect full views and native Studio results for final acceptance.
 - Promote chosen editable sources, recipes, exports and nonsecret receipts to a durable `assets/` folder. `build` is disposable. Asset IDs alone are not backups.
 
-The neutral two-bone fixture verifies export and sampling. It is a pipeline test, not production game art. See `docs/tooling-validation.md` for measured local timings.
+The neutral two-bone fixture verifies export and sampling. It is a pipeline test, not production game art. See `docs/tooling-validation.md` for extraction checks and [Blender performance measurements](blender-performance.md) for the subsequent optimization comparison.
 
 ## Studio configuration and inspection
 

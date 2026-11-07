@@ -2,6 +2,8 @@
 
 Verified locally on Windows with Node 24.22.1 and Blender 5.2.3 LTS. This records the port's acceptance scope, not a promise of future hardware timings or a production-art approval.
 
+Subsequent Blender optimizations and their paired measurements are recorded in [blender-performance.md](blender-performance.md). The timings below are the extraction baseline.
+
 ## Offline checks
 
 - All 125 extracted/new pipeline tests pass with workspace-local temporary directories. Coverage includes bounded Blender batches, cache invalidation/copy independence, malformed geometry/animations, input encodings, upload ambiguity/idempotency, ownership, controller crashes, device/input restoration and source-transfer corruption.

@@ -75,6 +75,11 @@ if job.get('animation'):
     # Blender X,Y,Z -> Roblox X,Z,-Y. Pose transforms are relative to rest,
     # conjugated into the same basis; no Euler-angle approximations.
     basis = Matrix(((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0), (0, 0, 0, 1)))
+    basis_inverse = basis.inverted()
+    rest_inverses = {
+        bone.name: (bone.parent.matrix_local.inverted() @ bone.matrix_local if bone.parent else bone.matrix_local).inverted()
+        for bone in arm.data.bones
+    }
     channels = [{'name': config['rootPart'], 'parent': None}] + [{'name': b.name, 'parent': b.parent.name if b.parent else config['rootPart']} for b in arm.data.bones]
     frames = []
     original_frame = scene.frame_current
@@ -87,11 +92,11 @@ if job.get('animation'):
         evaluated = arm.evaluated_get(bpy.context.evaluated_depsgraph_get())
         for bone in arm.data.bones:
             pose = evaluated.pose.bones[bone.name]
-            rest = bone.parent.matrix_local.inverted() @ bone.matrix_local if bone.parent else bone.matrix_local
             posed = pose.parent.matrix.inverted() @ pose.matrix if pose.parent else pose.matrix
-            delta = basis @ (rest.inverted() @ posed) @ basis.inverted()
+            delta = basis @ (rest_inverses[bone.name] @ posed) @ basis_inverse
             rot = delta.to_3x3()
-            if abs(rot.determinant() - 1) > 1e-4 or any(abs((rot.transposed() @ rot)[i][j] - (1 if i == j else 0)) > 1e-4 for i in range(3) for j in range(3)):
+            gram = rot.transposed() @ rot
+            if abs(rot.determinant() - 1) > 1e-4 or any(abs(gram[i][j] - (1 if i == j else 0)) > 1e-4 for i in range(3) for j in range(3)):
                 raise ValueError('Animated scale/shear cannot be represented by Roblox CFrame: ' + bone.name)
             t = delta.translation * config.get('studsPerUnit', 1)
             poses[bone.name] = list(t) + [rot[i][j] for i in range(3) for j in range(3)]
@@ -130,6 +135,10 @@ center, radius = (lo + hi) / 2, max((hi - lo).length / 2, 0.5)
 scene.render.engine = 'CYCLES'
 scene.cycles.device = 'CPU'
 scene.cycles.samples = job.get('renderSamples', 24)
+scene.render.use_persistent_data = job.get('persistentData', True)
+if job.get('renderThreads') is not None:
+    scene.render.threads_mode = 'FIXED'
+    scene.render.threads = job['renderThreads']
 scene.render.resolution_x = scene.render.resolution_y = job['size']
 scene.render.resolution_percentage = 100
 scene.render.image_settings.file_format = 'PNG'
@@ -168,4 +177,4 @@ if job.get('animation'):
         bpy.ops.render.render(write_still=True)
 phase('motionRenderMs')
 timings['workerTotalMs'] = (time.perf_counter() - started) * 1000
-(output / 'report.json').write_text(json.dumps({'ok': True, 'blender': bpy.app.version_string, 'reviewProfile': job.get('reviewProfile', 'full'), 'renderSamples': scene.cycles.samples, 'timings': timings, 'meshes': stats, 'bounds': [list(lo), list(hi)], 'animationFrames': len(frames) if job.get('animation') else 0}, indent=2), encoding='utf-8')
+(output / 'report.json').write_text(json.dumps({'ok': True, 'blender': bpy.app.version_string, 'reviewProfile': job.get('reviewProfile', 'full'), 'renderSamples': scene.cycles.samples, 'persistentData': scene.render.use_persistent_data, 'renderThreads': scene.render.threads if scene.render.threads_mode == 'FIXED' else None, 'timings': timings, 'meshes': stats, 'bounds': [list(lo), list(hi)], 'animationFrames': len(frames) if job.get('animation') else 0}, indent=2), encoding='utf-8')

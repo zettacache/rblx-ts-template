@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { randomUUID } = require("node:crypto");
 const { performance } = require("node:perf_hooks");
+const { availableParallelism } = require("node:os");
 const blender = require("./blender.cjs");
 const { readJson } = require("./text-files.cjs");
 
@@ -21,8 +22,23 @@ async function batch(file, options = {}, runtime = {}) {
 	const concurrency = options.jobs ?? 1;
 	if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 4)
 		throw Error("--jobs must be 1..4.");
-	for (const job of jobs)
-		blender.profile(blender.validate(readJson(job), path.dirname(job)), options.profile);
+	if (
+		options.threads !== undefined &&
+		options.threads !== "auto" &&
+		(!Number.isInteger(options.threads) || options.threads < 1 || options.threads > 256)
+	)
+		throw Error("--threads must be 1..256.");
+	if (options.persistentData !== undefined && typeof options.persistentData !== "boolean")
+		throw Error("persistentData must be boolean.");
+	const cpuCount = (runtime.cpuCount || availableParallelism)();
+	const workerCount = Math.min(concurrency, jobs.length);
+	const threadBudget = Math.min(256, Math.max(1, Math.floor(cpuCount / workerCount)));
+	const jobConfigs = jobs.map((job) =>
+		blender.profile(blender.validate(readJson(job), path.dirname(job)), options.profile),
+	);
+	const threadsPerJob = jobConfigs.map((job) =>
+		options.threads === "auto" ? (job.renderThreads ?? threadBudget) : (options.threads ?? job.renderThreads),
+	);
 	const started = performance.now();
 	// One expensive binary hash/version probe per batch; each job still hashes its inputs and verifies outputs.
 	const executable = runtime.executable || blender.discover();
@@ -38,7 +54,12 @@ async function batch(file, options = {}, runtime = {}) {
 			try {
 				const result = await run(
 					job,
-					{ profile: options.profile, reuse: options.reuse },
+					{
+						profile: options.profile,
+						reuse: options.reuse,
+						persistentData: options.persistentData,
+						threads: threadsPerJob[index],
+					},
 					{ ...runtime, executable, executableIdentity: () => identity },
 				);
 				results[index] = {
@@ -53,11 +74,14 @@ async function batch(file, options = {}, runtime = {}) {
 			}
 		}
 	}
-	await Promise.all(Array.from({ length: Math.min(concurrency, jobs.length) }, worker));
+	await Promise.all(Array.from({ length: workerCount }, worker));
 	const report = {
 		version: 1,
 		ok: results.every((result) => result.ok),
 		concurrency,
+		workerCount,
+		cpuCount,
+		threadsPerJob: threadsPerJob.map((threads) => threads ?? null),
 		executableIdentity: identity,
 		elapsedMs: performance.now() - started,
 		results,
@@ -71,11 +95,15 @@ async function batch(file, options = {}, runtime = {}) {
 async function main(argv = process.argv.slice(2)) {
 	if (!argv.length || argv.includes("--help"))
 		return console.log(
-			"blender-batch.cjs <batch.json> [--profile full|preview] [--reuse] [--jobs 1..4]\nDefaults: full, one worker, no cache reuse. All jobs are preflighted; one report records every result.",
+			"blender-batch.cjs <batch.json> [--profile full|preview] [--reuse] [--jobs 1..4] [--threads auto|1..256] [--no-persistent-data]\nDefaults: full, one worker, automatic render threading, no cache reuse. --threads auto divides a CPU thread budget across workers. All jobs are preflighted; one report records every result.",
 		);
 	const options = {};
 	for (let i = 1; i < argv.length; i++) {
 		if (argv[i] === "--reuse" && options.reuse === undefined) options.reuse = true;
+		else if (argv[i] === "--threads" && options.threads === undefined && argv[i + 1])
+			options.threads = argv[i + 1] === "auto" ? argv[++i] : Number(argv[++i]);
+		else if (argv[i] === "--no-persistent-data" && options.persistentData === undefined)
+			options.persistentData = false;
 		else if (
 			argv[i] === "--profile" &&
 			options.profile === undefined &&
