@@ -26,6 +26,27 @@ A job declares a script and/or `.blend`, export formats, views, size and optiona
 
 The neutral two-bone fixture verifies export and sampling. It is a pipeline test, not production game art. See `docs/tooling-validation.md` for extraction checks and [Blender performance measurements](blender-performance.md) for the subsequent optimization comparison.
 
+### Reusable rig animations
+
+Keep one canonical skeleton per rig family and author idle/walk/attack clips once as Blender Actions. Mesh shapes, materials and weights can vary around that skeleton. Save each clip with its source rig's Action and slot active in a durable, local `.blend` library. Existing exported `scene.blend` files can serve as libraries after promotion out of `build`. Blender's [Action and slot model](https://docs.blender.org/api/5.2/bpy.types.AnimData.html) lets the worker apply the same transform channels to another armature.
+
+Add this to a target job's existing `animation` settings (keep its target armature, rootPart, frame range, fps and scale):
+
+```json
+{
+  "library": {
+    "blend": "../../assets/animations/shared-idle.blend",
+    "armature": "CanonicalRig"
+  }
+}
+```
+
+Paths are relative to the job JSON. The source rig's active Action and slot replace the target's active Action. The worker preserves source rotation modes and unkeyed bone transform values. The resulting editable scene embeds the Action; FBX/GLB, sampled Roblox clip JSON and four motion review frames use it. The report records which Action was reused. The library bytes are automatically hashed and frozen as `animation-library.blend`; changing them invalidates `--reuse`, and cache hits relocate their paths into the fresh output directory.
+
+Reuse requires identical bone names, parents, rest matrices, lengths and inheritance settings, with applied object transforms and pose evaluation enabled. Target object names and mesh appearance may differ. Bake constraints, drivers and NLA into a standalone bone-transform Action first; the worker rejects those dependencies and object/custom-property animation. Skeleton/proportion changes require deliberate retargeting and review before saving a new compatible library. This does not automatically transfer Roblox asset permissions or publish animations.
+
+`scripts/blender/examples/companion-variant.py` demonstrates changing a mesh while consuming a shared clip. Run `npm run test:blender` for an optional real Blender integration check: it builds the canonical fixture, applies its Action to a mesh variant with a different armature name/rotation mode, compares all 33 sampled frames, checks cache reuse, and rejects incompatible rest skeletons, bone names and constraints. This passed locally with Blender 5.2.3 LTS. It writes disposable evidence under `build/blender-reuse`; ordinary tooling tests do not require Blender.
+
 ## Studio configuration and inspection
 
 `studio-tools.json` starts with `expectedPlaceId: null`. Set it through the initializer:

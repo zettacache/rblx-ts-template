@@ -106,6 +106,20 @@ function validate(doc, base) {
 			throw Error(
 				"Animation needs armature, rootPart, start/end (max 1800 frames/60 seconds), fps (1..60), optional positive studsPerUnit.",
 			);
+		if (a.library !== undefined) {
+			const lib = a.library;
+			if (
+				!lib ||
+				typeof lib.blend !== "string" ||
+				!lib.blend.toLowerCase().endsWith(".blend") ||
+				typeof lib.armature !== "string" ||
+				!lib.armature
+			)
+				throw Error("animation.library needs a .blend path and source armature name.");
+			const blend = path.resolve(base, lib.blend);
+			if (!fs.statSync(blend).isFile()) throw Error("Missing animation library.");
+			result.animation = { ...a, library: { ...lib, blend } };
+		}
 	}
 	return result;
 }
@@ -182,6 +196,7 @@ async function run(file, options = {}, runtime = {}) {
 	const sourceBytes = Object.fromEntries(
 		["script", "blend"].filter((k) => job[k]).map((k) => [k, fs.readFileSync(job[k])]),
 	);
+	if (job.animation?.library) sourceBytes.animationLibrary = fs.readFileSync(job.animation.library.blend);
 	const dependencies = Object.fromEntries(job.dependencies.map((p) => [p, sha(fs.readFileSync(p))]));
 	const key = sha(
 		JSON.stringify({
@@ -204,6 +219,8 @@ async function run(file, options = {}, runtime = {}) {
 			for (const field of ["script", "blend"])
 				if (copiedJob[field])
 					copiedJob[field] = path.join(output, field === "script" ? "source.py" : "input.blend");
+			if (copiedJob.animation?.library)
+				copiedJob.animation.library.blend = path.join(output, "animation-library.blend");
 			const jobBytes = Buffer.from(JSON.stringify(copiedJob, null, 2));
 			fs.writeFileSync(path.join(output, "job.json"), jobBytes);
 			const manifest = {
@@ -232,6 +249,14 @@ async function run(file, options = {}, runtime = {}) {
 			fs.writeFileSync(job[key], bytes);
 		}
 	const frozen = path.join(output, "job.json");
+	if (job.animation?.library) {
+		inputs.animationLibrary = {
+			source: job.animation.library.blend,
+			sha256: sha(sourceBytes.animationLibrary),
+		};
+		job.animation.library.blend = path.join(output, "animation-library.blend");
+		fs.writeFileSync(job.animation.library.blend, sourceBytes.animationLibrary);
+	}
 	fs.writeFileSync(frozen, JSON.stringify(job, null, 2));
 	const frozenWorker = path.join(output, "worker.py");
 	fs.writeFileSync(frozenWorker, workerBytes);

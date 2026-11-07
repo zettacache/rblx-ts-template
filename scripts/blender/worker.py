@@ -61,6 +61,7 @@ for obj in meshes:
     evaluated.to_mesh_clear()
 
 phase('geometryValidationMs')
+animation_reuse = None
 if job.get('animation'):
     config = job['animation']
     arm = bpy.data.objects.get(config['armature'])
@@ -72,6 +73,70 @@ if job.get('animation'):
         raise ValueError('Animation supports at most 99 bones plus the root part')
     if config['rootPart'] in arm.data.bones:
         raise ValueError('rootPart must be distinct from all bone names')
+    if config.get('library'):
+        library = config['library']
+        with bpy.data.libraries.load(library['blend'], link=False) as (available, requested):
+            if library['armature'] not in available.objects:
+                raise ValueError('Animation library armature is missing')
+            requested.objects = [library['armature']]
+        source = requested.objects[0]
+        # Appending retains weak library bookkeeping even when all IDs are local.
+        users = bpy.data.user_map()
+        for dependency in list(bpy.data.libraries):
+            if not users.get(dependency):
+                bpy.data.libraries.remove(dependency)
+        if bpy.data.libraries:
+            raise ValueError('Make animation library dependencies local before reuse')
+        if source.type != 'ARMATURE' or not source.animation_data or not source.animation_data.action:
+            raise ValueError('Animation library needs an armature with an active Action')
+        action = source.animation_data.action
+        if set(source.data.bones.keys()) != set(arm.data.bones.keys()):
+            raise ValueError('Reusable animation requires identical bone names')
+        for rig in (source, arm):
+            if rig.data.pose_position != 'POSE':
+                raise ValueError('Reusable animation requires rigs in pose evaluation mode')
+            data = rig.animation_data
+            if rig.constraints or any(b.constraints for b in rig.pose.bones) or (data and (data.drivers or data.nla_tracks)):
+                raise ValueError('Bake constraints, drivers and NLA to a standalone Action before reuse')
+            if rig.data.animation_data:
+                raise ValueError('Animated armature data is not supported for Action reuse')
+        if any(abs(source.matrix_world[i][j] - Matrix.Identity(4)[i][j]) > 1e-5 for i in range(4) for j in range(4)):
+            raise ValueError('Apply source armature object transforms before Action reuse')
+        if source.animation_data.action_blend_type != 'REPLACE' or source.animation_data.action_influence != 1:
+            raise ValueError('Reusable source Action must use REPLACE with full influence')
+        allowed_paths = set()
+        for bone in arm.data.bones:
+            other = source.data.bones[bone.name]
+            parent = lambda b: b.parent.name if b.parent else None
+            if parent(bone) != parent(other) or any(abs(bone.matrix_local[i][j] - other.matrix_local[i][j]) > 1e-5 for i in range(4) for j in range(4)) or abs(bone.length - other.length) > 1e-5:
+                raise ValueError('Reusable animation rest skeleton mismatch: ' + bone.name)
+            for setting in ('inherit_scale', 'use_inherit_rotation', 'use_local_location', 'use_relative_parent'):
+                if getattr(bone, setting) != getattr(other, setting):
+                    raise ValueError('Reusable animation bone settings mismatch: ' + bone.name)
+            pose, original = arm.pose.bones[bone.name], source.pose.bones[bone.name]
+            pose.rotation_mode = original.rotation_mode
+            for prop in ('location', 'scale', 'rotation_euler', 'rotation_quaternion', 'rotation_axis_angle'):
+                setattr(pose, prop, getattr(original, prop).copy() if hasattr(getattr(original, prop), 'copy') else tuple(getattr(original, prop)))
+                allowed_paths.add(original.path_from_id() + '.' + prop)
+        slot = getattr(source.animation_data, 'action_slot', None)
+        if getattr(action, 'is_action_layered', False):
+            if slot is None:
+                raise ValueError('Reusable Action needs an active slot')
+            curves = [curve for layer in action.layers for strip in layer.strips if strip.type == 'KEYFRAME' for bag in [strip.channelbag(slot)] if bag for curve in bag.fcurves]
+        else:
+            curves = list(action.fcurves)
+        if not curves or any(curve.data_path not in allowed_paths for curve in curves):
+            raise ValueError('Reusable Action must contain only bone transform channels; bake object/custom-property motion first')
+        arm.animation_data_create()
+        arm.animation_data.action = action
+        if slot is not None:
+            arm.animation_data.action_slot = slot
+        arm.animation_data.action_blend_type = 'REPLACE'
+        arm.animation_data.action_influence = 1
+        animation_reuse = {'armature': library['armature'], 'action': action.name, 'bones': len(arm.data.bones), 'compatibility': 'identical-rest-skeleton'}
+        # Keep only the reused Action, never export the library's source object.
+        bpy.data.objects.remove(source, do_unlink=True)
+        scene.frame_set(scene.frame_current)
     # Blender X,Y,Z -> Roblox X,Z,-Y. Pose transforms are relative to rest,
     # conjugated into the same basis; no Euler-angle approximations.
     basis = Matrix(((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0), (0, 0, 0, 1)))
@@ -177,4 +242,4 @@ if job.get('animation'):
         bpy.ops.render.render(write_still=True)
 phase('motionRenderMs')
 timings['workerTotalMs'] = (time.perf_counter() - started) * 1000
-(output / 'report.json').write_text(json.dumps({'ok': True, 'blender': bpy.app.version_string, 'reviewProfile': job.get('reviewProfile', 'full'), 'renderSamples': scene.cycles.samples, 'persistentData': scene.render.use_persistent_data, 'renderThreads': scene.render.threads if scene.render.threads_mode == 'FIXED' else None, 'timings': timings, 'meshes': stats, 'bounds': [list(lo), list(hi)], 'animationFrames': len(frames) if job.get('animation') else 0}, indent=2), encoding='utf-8')
+(output / 'report.json').write_text(json.dumps({'ok': True, 'blender': bpy.app.version_string, 'reviewProfile': job.get('reviewProfile', 'full'), 'renderSamples': scene.cycles.samples, 'persistentData': scene.render.use_persistent_data, 'renderThreads': scene.render.threads if scene.render.threads_mode == 'FIXED' else None, 'timings': timings, 'meshes': stats, 'bounds': [list(lo), list(hi)], 'animationFrames': len(frames) if job.get('animation') else 0, 'animationReuse': animation_reuse}, indent=2), encoding='utf-8')

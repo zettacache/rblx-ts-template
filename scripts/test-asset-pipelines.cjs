@@ -170,6 +170,10 @@ function blenderFixture(t) {
 				path.join(output, "report.json"),
 				JSON.stringify({ ok: true, size: job.size, samples: job.renderSamples }),
 			);
+			if (job.animation) {
+				fs.writeFileSync(path.join(output, "animation.json"), JSON.stringify(clip()));
+				for (let i = 0; i < 4; i++) fs.writeFileSync(path.join(output, `motion-${i}.png`), "motion");
+			}
 		},
 	};
 	return {
@@ -181,6 +185,55 @@ function blenderFixture(t) {
 		},
 	};
 }
+test("animation libraries validate, freeze, invalidate cache and relocate on reuse", async (t) => {
+	const f = blenderFixture(t);
+	const library = path.join(f.dir, "idle.blend");
+	fs.writeFileSync(library, "library-v1");
+	const job = JSON.parse(fs.readFileSync(f.file));
+	job.animation = {
+		armature: "Target",
+		rootPart: "Root",
+		start: 1,
+		end: 33,
+		fps: 30,
+		library: { blend: "idle.blend", armature: "Source" },
+	};
+	assert.equal(blender.validate(job, f.dir).animation.library.blend, library);
+	assert.equal(job.animation.library.blend, "idle.blend", "validation must not mutate caller");
+	for (const bad of [
+		null,
+		{},
+		{ blend: "bad.py", armature: "Source" },
+		{ blend: "idle.blend", armature: "" },
+	])
+		assert.throws(
+			() => blender.validate({ ...job, animation: { ...job.animation, library: bad } }, f.dir),
+			/library/,
+		);
+	fs.writeFileSync(f.file, JSON.stringify(job));
+	const launch = f.runtime.launch;
+	f.runtime.launch = async (...args) => {
+		const frozen = JSON.parse(fs.readFileSync(args[1].at(-2)));
+		assert.equal(path.dirname(frozen.animation.library.blend), args[1].at(-1));
+		assert.equal(fs.readFileSync(frozen.animation.library.blend, "utf8"), fs.readFileSync(library, "utf8"));
+		await launch(...args);
+	};
+	const first = await blender.run(f.file, { reuse: true }, f.runtime);
+	const hit = await blender.run(f.file, { reuse: true }, f.runtime);
+	assert.equal(f.calls, 1);
+	assert.equal(hit.cache.reused, true);
+	assert.equal(hit.inputs.animationLibrary.source, library);
+	assert.equal(
+		JSON.parse(fs.readFileSync(path.join(hit.output, "job.json"))).animation.library.blend,
+		path.join(hit.output, "animation-library.blend"),
+	);
+	assert.deepEqual(hit.cache.artifacts, blenderCache.inventory(hit.output));
+	fs.writeFileSync(library, "library-v2");
+	const changed = await blender.run(f.file, { reuse: true }, f.runtime);
+	assert.equal(f.calls, 2);
+	assert.notEqual(changed.inputs.animationLibrary.sha256, first.inputs.animationLibrary.sha256);
+	assert.equal(fs.readFileSync(path.join(first.output, "animation-library.blend"), "utf8"), "library-v1");
+});
 test("Blender reuse verifies and copies every artifact, including recipe mesh outputs", async (t) => {
 	const f = blenderFixture(t),
 		first = await blender.run(f.file, {}, f.runtime);

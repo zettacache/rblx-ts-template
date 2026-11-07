@@ -24,6 +24,7 @@
     "blender": "node scripts/blender.cjs",
     "blender:batch": "node scripts/blender-batch.cjs",
     "blender:doctor": "node scripts/blender.cjs doctor",
+    "test:blender": "node scripts/test-blender-reuse.mjs",
     "studio": "node scripts/studio.cjs",
     "studio:doctor": "node scripts/studio.cjs doctor",
     "studio:sources": "node scripts/studio-sources.cjs",
