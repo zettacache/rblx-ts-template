@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Treasure Market · Robux shop concept</title>
+		<link rel="stylesheet" href="shop.css" />
+		<script src="shop.js" defer></script>
+	</head>
+	<body>
+		<svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+			<defs>
+				<linearGradient id="gold" x2="0" y2="1">
+					<stop stop-color="#fff39b" />
+					<stop offset=".48" stop-color="#ffd041" />
+					<stop offset="1" stop-color="#f2971d" />
+				</linearGradient>
+				<linearGradient id="mint" x2="0" y2="1">
+					<stop stop-color="#b8fff4" />
+					<stop offset="1" stop-color="#19bfc2" />
+				</linearGradient>
+				<linearGradient id="purple" x2="0" y2="1">
+					<stop stop-color="#e6c3ff" />
+					<stop offset="1" stop-color="#9952db" />
+				</linearGradient>
+			</defs>
+			<symbol id="coin" viewBox="0 0 100 100">
+				<ellipse cx="51" cy="56" rx="34" ry="36" fill="#d37b18" stroke="#17284b" stroke-width="5" />
+				<circle cx="46" cy="46" r="35" fill="url(#gold)" stroke="#17284b" stroke-width="5" />
+				<circle cx="46" cy="46" r="26" fill="none" stroke="#df961b" stroke-width="4" />
+				<path
+					d="M57 31H42q-12 0-12 9t13 9h7q12 0 12 9t-12 9H34M47 23v50"
+					fill="none"
+					stroke="#fff4ac"
+					stroke-width="8"
+					stroke-linecap="round"
+				/>
+				<path
+					d="M57 28H42q-12 0-12 9t13 9h7q12 0 12 9t-12 9H34M47 20v50"
+					fill="none"
+					stroke="#8d5116"
+					stroke-width="5"
+					stroke-linecap="round"
+				/>
+				<path d="M22 26q10-13 24-13" fill="none" stroke="#fff9cf" stroke-width="5" stroke-linecap="round" />
+			</symbol>
+			<symbol id="gem" viewBox="0 0 100 100">
+				<path
+					d="M23 18h54l16 28-43 43L7 46z"
+					fill="url(#mint)"
+					stroke="#17284b"
+					stroke-width="5"
+					stroke-linejoin="round"
+				/>
+				<path
+					d="M23 18l9 28 18 43 18-43 9-28M7 46h86M32 46l18-28 18 28"
+					fill="none"
+					stroke="#13879e"
+					stroke-width="3"
+				/>
+				<path d="M24 23h21L31 39H15z" fill="#e1fff7" />
+				<path d="M34 49l16 32-8-32z" fill="#9affea" />
+			</symbol>
+			<symbol id="crown" viewBox="0 0 100 100">
+				<path
+					d="M17 72L10 30l25 16 15-28 16 28 25-16-8 42z"
+					fill="url(#gold)"
+					stroke="#17284b"
+					stroke-width="5"
+					stroke-linejoin="round"
+				/>
+				<rect x="17" y="68" width="66" height="16" rx="5" fill="#ffbc36" stroke="#17284b" stroke-width="5" />
+				<path d="M25 72h48" stroke="#fff0a1" stroke-width="4" />
+				<path d="M50 46l9 9-9 10-9-10z" fill="#cf66f5" stroke="#7631a0" stroke-width="3" />
+				<circle cx="10" cy="26" r="6" fill="#ffe58b" stroke="#17284b" stroke-width="4" />
+				<circle cx="50" cy="15" r="6" fill="#ffe58b" stroke="#17284b" stroke-width="4" />
+				<circle cx="91" cy="26" r="6" fill="#ffe58b" stroke="#17284b" stroke-width="4" />
+			</symbol>
+			<symbol id="potion" viewBox="0 0 100 100">
+				<path
+					d="M37 26v15C2 57 16 90 49 90s48-33 14-49V26"
+					fill="#d2e9ff"
+					stroke="#17284b"
+					stroke-width="5"
+				/>
+				<path d="M27 61q20 9 48-2c12 28-52 37-48 2z" fill="url(#purple)" stroke="#7939ae" stroke-width="3" />
+				<rect x="33" y="17" width="34" height="14" rx="5" fill="#f9b84a" stroke="#17284b" stroke-width="5" />
+				<path d="M30 50q-9 6-9 14" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" />
+				<path d="M48 54l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#ffe489" />
+			</symbol>
+			<symbol id="bag" viewBox="0 0 100 100">
+				<path
+					d="M25 32h50l8 54H17z"
+					fill="url(#gold)"
+					stroke="#17284b"
+					stroke-width="5"
+					stroke-linejoin="round"
+				/>
+				<path
+					d="M35 37V24a15 15 0 0 1 30 0v13"
+					fill="none"
+					stroke="#17284b"
+					stroke-width="6"
+					stroke-linecap="round"
+				/>
+				<path
+					d="M50 44l5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z"
+					fill="#fff5b8"
+					stroke="#bc781e"
+					stroke-width="3"
+				/>
+			</symbol>
+			<symbol id="robux" viewBox="0 0 24 24">
+				<path
+					fill="currentColor"
+					fill-rule="evenodd"
+					d="M12 1 22 7v10l-10 6L2 17V7zm0 4L6 9v6l6 4 6-4V9zm-3 4h6v6H9z"
+				/>
+			</symbol>
+			<symbol id="spark" viewBox="0 0 24 24">
+				<path d="m12 1 3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="currentColor" />
+			</symbol>
+		</svg>
+		<div class="world" aria-hidden="true">
+			<div class="cloud one"></div>
+			<div class="cloud two"></div>
+			<div class="mountain a"></div>
+			<div class="mountain b"></div>
+			<div class="island"></div>
+			<div class="world-coin">
+				<svg><use href="#coin" /></svg>
+			</div>
+		</div>
+		<div class="stage">
+			<div class="design-caption"><span>EXAMPLE GAME INTERFACE</span><span>01 / TREASURE MARKET</span></div>
+			<button class="reopen" id="reopen" hidden>Open shop</button>
+			<main class="shop" id="shop" aria-label="Treasure Market shop">
+				<header class="shop-header">
+					<div class="brand">
+						<svg class="shop-bag"><use href="#bag" /></svg>
+						<div>
+							<h1>SHOP</h1>
+							<p>A little extra for the adventure.</p>
+						</div>
+					</div>
+					<div class="balances" aria-label="Example in-game balances">
+						<span role="img" aria-label="12,400 example coins"
+							><svg><use href="#coin" /></svg>12,400</span
+						><span role="img" aria-label="128 example gems"
+							><svg><use href="#gem" /></svg>128</span
+						>
+					</div>
+					<button class="close" id="close-shop" aria-label="Close shop">×</button>
+				</header>
+				<div class="shop-inner">
+					<nav class="categories" aria-label="Shop categories">
+						<button class="category active" data-category="featured" aria-pressed="true">
+							<svg><use href="#spark" /></svg> Featured</button
+						><button class="category" data-category="passes" aria-pressed="false">
+							<svg><use href="#crown" /></svg> Game passes</button
+						><button class="category" data-category="coins" aria-pressed="false">
+							<svg><use href="#coin" /></svg> Coins & gems</button
+						><button class="category" data-category="boosts" aria-pressed="false">
+							<svg><use href="#potion" /></svg> Boosts
+						</button>
+					</nav>
+					<section class="hero" id="bundle-hero" aria-labelledby="bundle-title">
+						<div class="hero-pattern" aria-hidden="true"></div>
+						<div class="hero-copy">
+							<div class="hero-kicker">
+								<span class="label">START YOUR ADVENTURE</span
+								><span class="purchase-type">One-time bundle</span>
+							</div>
+							<h2 id="bundle-title">A head start.<br /><span>A whole lot of treasure.</span></h2>
+							<p>Stock your pockets and hit the trail.</p>
+							<div class="bundle-contents">
+								<span
+									><svg><use href="#coin" /></svg><b>20,000</b> coins</span
+								><span
+									><svg><use href="#gem" /></svg><b>250</b> gems</span
+								><span
+									><svg><use href="#potion" /></svg><b>2× coins</b> · 15 min</span
+								>
+							</div>
+							<button class="price hero-price" data-product="starter">
+								<span>Get Starter Bundle</span
+								><strong
+									><svg><use href="#robux" /></svg>299</strong
+								>
+							</button>
+						</div>
+						<div class="hero-art">
+							<div class="sunburst"></div>
+							<img src="treasure-bundle.png" alt="" /><svg class="twinkle t1"><use href="#spark" /></svg
+							><svg class="twinkle t2"><use href="#spark" /></svg>
+						</div>
+					</section>
+					<div class="section-title">
+						<h2 id="section-title">Make it your adventure</h2>
+						<span id="section-note">Permanent perks & handy extras</span>
+					</div>
+					<section class="product-grid" id="products" aria-label="Shop products"></section>
+					<footer class="shop-footer">
+						<span
+							><svg><use href="#robux" /></svg>Prices shown in Robux</span
+						><span class="demo-label">DESIGN DEMO · PURCHASES ARE SIMULATED</span>
+					</footer>
+				</div>
+			</main>
+			<p class="presentation-note">Bold shapes. Clear choices. A little treasure.</p>
+		</div>
+		<dialog id="purchase-dialog" aria-labelledby="dialog-title">
+			<form method="dialog">
+				<button class="dialog-close" value="cancel" aria-label="Close purchase review">×</button>
+			</form>
+			<span class="dialog-eyebrow">REVIEW YOUR PICK</span>
+			<h2 id="dialog-title"></h2>
+			<p id="dialog-type"></p>
+			<p id="dialog-benefit"></p>
+			<div class="dialog-price">
+				<span>Example price</span
+				><strong
+					><svg><use href="#robux" /></svg><span id="dialog-price"></span
+				></strong>
+			</div>
+			<p class="simulation-note">Prototype only. No Robux will be spent.</p>
+			<div class="dialog-actions">
+				<button class="secondary" id="cancel-purchase">Cancel</button
+				><button class="price" id="confirm-purchase">Simulate purchase</button>
+			</div>
+			<p id="dialog-status" role="status" aria-live="polite"></p>
+		</dialog>
+		<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+	</body>
+</html>
