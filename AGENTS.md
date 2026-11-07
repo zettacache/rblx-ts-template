@@ -19,3 +19,12 @@ Read docs/tooling.md for asset/Studio commands and docs/team.md for optional spe
 - Never inherit Monster RNG's place/creator IDs, permissions, active turns, receipts, or gameplay policies. studio-tools.json is unconfigured by default.
 - Live Studio commands must use the configured target and matching studio:turn reservation. Stop Rojo before authoring; never adopt another owner's test or blindly retry an ambiguous mutation.
 - Keep editable asset sources durable. Do not erase unresolved receipts/journals to bypass a refused clean command.
+
+## Commits and chat completion
+
+- Auto-commit completed, verified work in this project without asking for commit confirmation, unless the user requests otherwise. Commit at coherent completion points; run the checks appropriate to the change first.
+- Use short, imperative commit subjects, preferably 50 characters or fewer (for example, `Add rig retargeting`). Include a body only when it explains a material decision.
+- Stage only owned changes. Inspect the staged diff and preserve other chats' edits and staged work; coordinate shared files and Git operations. Read-only review tasks report findings without creating commits. If checks, ownership or Git access block a commit, report the blocker instead of claiming completion.
+- Honor existing push instructions; auto-commit alone does not authorize a new remote push, force-push, history rewrite or publication.
+- Before finishing a chat, update its coordination handoff with the outcome, verification, commit/push status and remaining work. When its requested work, required checks, owned commits and any authorized push are complete, and it has no unresolved blocker, pending approval or running task, end the final response with `Ready to archive.` Other chats' independent work need not be complete.
+- If this chat still has required work, say what remains instead of declaring archive readiness. Announcing readiness does not archive the chat; archive it only when the user requests that action.
