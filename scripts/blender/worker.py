@@ -19,6 +19,89 @@ def phase(name):
     now = time.perf_counter()
     timings[name] = (now - phase_started) * 1000
     phase_started = now
+
+def rigid(matrix, label):
+    rotation = matrix.to_3x3()
+    gram = rotation.transposed() @ rotation
+    if any(not math.isfinite(v) for row in matrix for v in row) or abs(rotation.determinant() - 1) > 1e-4 or any(abs(gram[i][j] - (1 if i == j else 0)) > 1e-4 for i in range(3) for j in range(3)):
+        raise ValueError('Retargeting cannot represent scale, shear or nonfinite motion: ' + label)
+
+def retarget_action(source, target, config):
+    settings = config['retarget']
+    mapping = settings['boneMap']
+    if set(mapping) != set(target.data.bones.keys()) or set(mapping.values()) != set(source.data.bones.keys()):
+        raise ValueError('Retarget boneMap must cover every source and target bone exactly once')
+    ordered = sorted(target.data.bones, key=lambda b: len(b.parent_recursive))
+    prepared = {}
+    for bone in ordered:
+        other = source.data.bones[mapping[bone.name]]
+        if (mapping[bone.parent.name] if bone.parent else None) != (other.parent.name if other.parent else None):
+            raise ValueError('Retarget boneMap must preserve parent hierarchy: ' + bone.name)
+        if min(bone.length, other.length) <= 1e-6:
+            raise ValueError('Retargeting requires nonzero bone lengths')
+        rest = bone.parent.matrix_local.inverted() @ bone.matrix_local if bone.parent else bone.matrix_local.copy()
+        other_rest = other.parent.matrix_local.inverted() @ other.matrix_local if other.parent else other.matrix_local.copy()
+        rigid(rest, bone.name)
+        rigid(other_rest, other.name)
+        # Express source rest-bone axes in target rest-bone axes, including bone roll.
+        axes = (bone.matrix_local.to_3x3().inverted() @ other.matrix_local.to_3x3()).to_4x4()
+        ratio = bone.length / other.length if settings['translation'] == 'bone-length' else 1.0
+        prepared[bone.name] = (other.name, rest, other_rest.inverted(), axes, axes.inverted(), ratio)
+    original_frame = scene.frame_current
+    scene.collection.objects.link(source)
+    source.hide_viewport = False
+    target.animation_data_clear()
+    previous = {}
+    max_error = 0.0
+    for frame in range(config['start'], config['end'] + 1):
+        scene.frame_set(frame)
+        evaluated = source.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        desired = {}
+        for bone in ordered:
+            name, rest, inverse, axes, axes_inverse, ratio = prepared[bone.name]
+            pose = evaluated.pose.bones[name]
+            local = pose.parent.matrix.inverted() @ pose.matrix if pose.parent else pose.matrix
+            delta = inverse @ local
+            rigid(delta, name)
+            delta = axes @ delta @ axes_inverse
+            delta.translation *= ratio
+            matrix = rest @ delta
+            if bone.parent:
+                matrix = desired[bone.parent.name] @ matrix
+            desired[bone.name] = matrix
+            kwargs = {'parent_matrix': desired[bone.parent.name], 'parent_matrix_local': bone.parent.matrix_local} if bone.parent else {}
+            basis = bone.convert_local_to_pose(matrix, bone.matrix_local, invert=True, **kwargs)
+            rigid(basis, bone.name)
+            target_pose = target.pose.bones[bone.name]
+            target_pose.rotation_mode = 'QUATERNION'
+            target_pose.matrix_basis = basis
+            quaternion = target_pose.rotation_quaternion.copy()
+            if bone.name in previous and previous[bone.name].dot(quaternion) < 0:
+                quaternion.negate()
+                target_pose.rotation_quaternion = quaternion
+            previous[bone.name] = quaternion
+            for prop in ('location', 'rotation_quaternion', 'scale'):
+                target_pose.keyframe_insert(data_path=prop, frame=frame, group=bone.name)
+        scene.frame_set(frame)
+        actual = target.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        for name, expected in desired.items():
+            error = max(abs(actual.pose.bones[name].matrix[i][j] - expected[i][j]) for i in range(4) for j in range(4))
+            max_error = max(max_error, error)
+            if error > 1e-4:
+                raise ValueError('Retarget bake readback mismatch (check connected bones/inheritance): ' + name)
+    baked = target.animation_data.action
+    baked.name = job['name'] + '_Retarget'
+    slot = getattr(target.animation_data, 'action_slot', None)
+    if getattr(baked, 'is_action_layered', False):
+        curves = [c for layer in baked.layers for strip in layer.strips if strip.type == 'KEYFRAME' for bag in [strip.channelbag(slot)] if bag for c in bag.fcurves]
+    else:
+        curves = baked.fcurves
+    for curve in curves:
+        for key in curve.keyframe_points:
+            key.interpolation = 'LINEAR'
+    scene.frame_set(original_frame)
+    return {'boneMap': mapping, 'translation': settings['translation'], 'lengthRatios': {name: target.data.bones[name].length / source.data.bones[mapping[name]].length for name in mapping}, 'translationScales': {name: values[-1] for name, values in prepared.items()}, 'bakedFrames': config['end'] - config['start'] + 1, 'maxMatrixError': max_error, 'contactCorrection': False}
+
 if job.get('blend'):
     bpy.ops.wm.open_mainfile(filepath=job['blend'], load_ui=False, use_scripts=False)
     if bpy.data.libraries:
@@ -90,7 +173,7 @@ if job.get('animation'):
         if source.type != 'ARMATURE' or not source.animation_data or not source.animation_data.action:
             raise ValueError('Animation library needs an armature with an active Action')
         action = source.animation_data.action
-        if set(source.data.bones.keys()) != set(arm.data.bones.keys()):
+        if not config.get('retarget') and set(source.data.bones.keys()) != set(arm.data.bones.keys()):
             raise ValueError('Reusable animation requires identical bone names')
         for rig in (source, arm):
             if rig.data.pose_position != 'POSE':
@@ -105,18 +188,8 @@ if job.get('animation'):
         if source.animation_data.action_blend_type != 'REPLACE' or source.animation_data.action_influence != 1:
             raise ValueError('Reusable source Action must use REPLACE with full influence')
         allowed_paths = set()
-        for bone in arm.data.bones:
-            other = source.data.bones[bone.name]
-            parent = lambda b: b.parent.name if b.parent else None
-            if parent(bone) != parent(other) or any(abs(bone.matrix_local[i][j] - other.matrix_local[i][j]) > 1e-5 for i in range(4) for j in range(4)) or abs(bone.length - other.length) > 1e-5:
-                raise ValueError('Reusable animation rest skeleton mismatch: ' + bone.name)
-            for setting in ('inherit_scale', 'use_inherit_rotation', 'use_local_location', 'use_relative_parent'):
-                if getattr(bone, setting) != getattr(other, setting):
-                    raise ValueError('Reusable animation bone settings mismatch: ' + bone.name)
-            pose, original = arm.pose.bones[bone.name], source.pose.bones[bone.name]
-            pose.rotation_mode = original.rotation_mode
+        for original in source.pose.bones:
             for prop in ('location', 'scale', 'rotation_euler', 'rotation_quaternion', 'rotation_axis_angle'):
-                setattr(pose, prop, getattr(original, prop).copy() if hasattr(getattr(original, prop), 'copy') else tuple(getattr(original, prop)))
                 allowed_paths.add(original.path_from_id() + '.' + prop)
         slot = getattr(source.animation_data, 'action_slot', None)
         if getattr(action, 'is_action_layered', False):
@@ -127,13 +200,30 @@ if job.get('animation'):
             curves = list(action.fcurves)
         if not curves or any(curve.data_path not in allowed_paths for curve in curves):
             raise ValueError('Reusable Action must contain only bone transform channels; bake object/custom-property motion first')
-        arm.animation_data_create()
-        arm.animation_data.action = action
-        if slot is not None:
-            arm.animation_data.action_slot = slot
-        arm.animation_data.action_blend_type = 'REPLACE'
-        arm.animation_data.action_influence = 1
         animation_reuse = {'armature': library['armature'], 'action': action.name, 'bones': len(arm.data.bones), 'compatibility': 'identical-rest-skeleton'}
+        if config.get('retarget'):
+            scene.render.fps, scene.render.fps_base = config['fps'], 1
+            animation_reuse['compatibility'] = 'retargeted'
+            animation_reuse['retarget'] = retarget_action(source, arm, config)
+        else:
+            for bone in arm.data.bones:
+                other = source.data.bones[bone.name]
+                parent = lambda b: b.parent.name if b.parent else None
+                if parent(bone) != parent(other) or any(abs(bone.matrix_local[i][j] - other.matrix_local[i][j]) > 1e-5 for i in range(4) for j in range(4)) or abs(bone.length - other.length) > 1e-5:
+                    raise ValueError('Reusable animation rest skeleton mismatch: ' + bone.name)
+                for setting in ('inherit_scale', 'use_inherit_rotation', 'use_local_location', 'use_relative_parent'):
+                    if getattr(bone, setting) != getattr(other, setting):
+                        raise ValueError('Reusable animation bone settings mismatch: ' + bone.name)
+                pose, original = arm.pose.bones[bone.name], source.pose.bones[bone.name]
+                pose.rotation_mode = original.rotation_mode
+                for prop in ('location', 'scale', 'rotation_euler', 'rotation_quaternion', 'rotation_axis_angle'):
+                    setattr(pose, prop, getattr(original, prop).copy() if hasattr(getattr(original, prop), 'copy') else tuple(getattr(original, prop)))
+            arm.animation_data_create()
+            arm.animation_data.action = action
+            if slot is not None:
+                arm.animation_data.action_slot = slot
+            arm.animation_data.action_blend_type = 'REPLACE'
+            arm.animation_data.action_influence = 1
         # Keep only the reused Action, never export the library's source object.
         bpy.data.objects.remove(source, do_unlink=True)
         scene.frame_set(scene.frame_current)

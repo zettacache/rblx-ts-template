@@ -16,7 +16,8 @@ const write = (name, doc) => {
 };
 const example = path.join(root, "scripts", "blender", "examples");
 const job = JSON.parse(fs.readFileSync(path.join(example, "companion.json")));
-job.script = path.join(example, "companion.py");
+job.script = path.join(example, "companion-motion.py");
+job.dependencies = [path.join(example, "companion.py")];
 job.size = 128;
 job.views = ["iso"];
 const runtime = { executable: blender.discover(), root: path.join(scratch, "outputs") };
@@ -55,6 +56,88 @@ assert.equal(
 	JSON.parse(fs.readFileSync(path.join(reused.output, "job.json"))).animation.library.blend,
 	path.join(reused.output, "animation-library.blend"),
 );
+const multiply = (a, b) =>
+	a.map((row) => b[0].map((_, j) => row.reduce((sum, value, k) => sum + value * b[k][j], 0)));
+const transpose = (a) => a[0].map((_, i) => a.map((row) => row[i]));
+const coordinateBasis = [
+	[1, 0, 0],
+	[0, 0, 1],
+	[0, -1, 0],
+];
+const retargetJob = {
+	...variantJob,
+	script: path.join(example, "companion-retarget.py"),
+	animation: {
+		...variantJob.animation,
+		retarget: { boneMap: { Root: "Root", Torso: "Body" }, translation: "bone-length" },
+	},
+};
+for (const translation of ["bone-length", "none"]) {
+	const retargetFile = write(`retarget-${translation}.json`, {
+		...retargetJob,
+		animation: { ...retargetJob.animation, retarget: { ...retargetJob.animation.retarget, translation } },
+	});
+	const result = await blender.run(retargetFile, { profile: "preview", reuse: true }, runtime);
+	const retargeted = clip(result);
+	const rest = JSON.parse(fs.readFileSync(path.join(result.output, "retarget-rest.json")));
+	for (let frame = 0; frame < retargeted.keyframes.length; frame++) {
+		for (const [target, source] of Object.entries(retargetJob.animation.retarget.boneMap)) {
+			const axes = multiply(
+				multiply(coordinateBasis, multiply(transpose(rest.target[target]), rest.source[source])),
+				transpose(coordinateBasis),
+			);
+			const originalPose = clip(original).keyframes[frame].poses[source];
+			const sourceRotation = [originalPose.slice(3, 6), originalPose.slice(6, 9), originalPose.slice(9, 12)];
+			const rotation = multiply(multiply(axes, sourceRotation), transpose(axes)).flat();
+			const ratio = translation === "none" ? 1 : target === "Root" ? 2 : 3;
+			const offset = multiply(
+				axes,
+				originalPose.slice(0, 3).map((value) => [value * ratio]),
+			).flat();
+			const expected = [...offset, ...rotation];
+			retargeted.keyframes[frame].poses[target].forEach((value, i) =>
+				assert.ok(
+					Math.abs(value - expected[i]) < 0.00003,
+					`${translation} frame ${frame} bone ${target} component ${i}: ${value} != ${expected[i]}`,
+				),
+			);
+		}
+	}
+	assert.equal(result.report.animationReuse.compatibility, "retargeted");
+	assert.deepEqual(result.report.animationReuse.retarget.lengthRatios, { Root: 2, Torso: 3 });
+	assert.deepEqual(
+		result.report.animationReuse.retarget.translationScales,
+		translation === "none" ? { Root: 1, Torso: 1 } : { Root: 2, Torso: 3 },
+	);
+	assert.ok(result.report.animationReuse.retarget.maxMatrixError < 0.0001);
+	const hit = await blender.run(retargetFile, { profile: "preview", reuse: true }, runtime);
+	assert.equal(hit.cache.reused, true);
+	assert.deepEqual(hit.cache.artifacts, cache.inventory(hit.output));
+}
+await assert.rejects(
+	blender.run(
+		write("unmapped-proportions.json", { ...retargetJob, animation: variantJob.animation }),
+		{ profile: "preview" },
+		runtime,
+	),
+	/identical bone names/,
+);
+for (const [boneMap, diagnostic] of [
+	[{ Root: "Root" }, /cover every/],
+	[{ Root: "Body", Torso: "Root" }, /preserve parent hierarchy/],
+]) {
+	await assert.rejects(
+		blender.run(
+			write("invalid-map.json", {
+				...retargetJob,
+				animation: { ...retargetJob.animation, retarget: { boneMap } },
+			}),
+			{ profile: "preview" },
+			runtime,
+		),
+		diagnostic,
+	);
+}
 const mismatchScript = path.join(scratch, "mismatch.py");
 fs.writeFileSync(
 	mismatchScript,

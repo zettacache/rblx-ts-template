@@ -234,6 +234,50 @@ test("animation libraries validate, freeze, invalidate cache and relocate on reu
 	assert.notEqual(changed.inputs.animationLibrary.sha256, first.inputs.animationLibrary.sha256);
 	assert.equal(fs.readFileSync(path.join(first.output, "animation-library.blend"), "utf8"), "library-v1");
 });
+test("retargeting requires explicit one-to-one maps and participates in cache identity", async (t) => {
+	const f = blenderFixture(t);
+	fs.writeFileSync(path.join(f.dir, "idle.blend"), "source-library");
+	const job = JSON.parse(fs.readFileSync(f.file));
+	job.animation = {
+		armature: "Target",
+		rootPart: "Root",
+		start: 1,
+		end: 33,
+		fps: 30,
+		library: { blend: "idle.blend", armature: "Source" },
+		retarget: { boneMap: { Root: "SourceRoot", Body: "SourceBody" } },
+	};
+	assert.equal(blender.validate(job, f.dir).animation.retarget.translation, "bone-length");
+	for (const invalid of [
+		null,
+		{},
+		{ boneMap: [] },
+		{ boneMap: {} },
+		{ boneMap: { A: "a", B: "a" } },
+		{ boneMap: { A: 1 } },
+		{ boneMap: { A: "a" }, translation: "guess" },
+	])
+		assert.throws(
+			() => blender.validate({ ...job, animation: { ...job.animation, retarget: invalid } }, f.dir),
+			/retarget/,
+		);
+	assert.throws(
+		() => blender.validate({ ...job, animation: { ...job.animation, library: undefined } }, f.dir),
+		/retarget/,
+	);
+	fs.writeFileSync(f.file, JSON.stringify(job));
+	const first = await blender.run(f.file, { reuse: true }, f.runtime);
+	job.animation.retarget.translation = "none";
+	fs.writeFileSync(f.file, JSON.stringify(job));
+	const second = await blender.run(f.file, { reuse: true }, f.runtime);
+	assert.notEqual(first.cache.key, second.cache.key);
+	job.animation.retarget.boneMap.Body = "Different";
+	fs.writeFileSync(f.file, JSON.stringify(job));
+	const third = await blender.run(f.file, { reuse: true }, f.runtime);
+	assert.notEqual(second.cache.key, third.cache.key);
+	assert.equal((await blender.run(f.file, { reuse: true }, f.runtime)).cache.reused, true);
+	assert.equal(f.calls, 3);
+});
 test("Blender reuse verifies and copies every artifact, including recipe mesh outputs", async (t) => {
 	const f = blenderFixture(t),
 		first = await blender.run(f.file, {}, f.runtime);

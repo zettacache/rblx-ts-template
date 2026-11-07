@@ -43,9 +43,33 @@ Add this to a target job's existing `animation` settings (keep its target armatu
 
 Paths are relative to the job JSON. The source rig's active Action and slot replace the target's active Action. The worker preserves source rotation modes and unkeyed bone transform values. The resulting editable scene embeds the Action; FBX/GLB, sampled Roblox clip JSON and four motion review frames use it. The report records which Action was reused. The library bytes are automatically hashed and frozen as `animation-library.blend`; changing them invalidates `--reuse`, and cache hits relocate their paths into the fresh output directory.
 
-Reuse requires identical bone names, parents, rest matrices, lengths and inheritance settings, with applied object transforms and pose evaluation enabled. Target object names and mesh appearance may differ. Bake constraints, drivers and NLA into a standalone bone-transform Action first; the worker rejects those dependencies and object/custom-property animation. Skeleton/proportion changes require deliberate retargeting and review before saving a new compatible library. This does not automatically transfer Roblox asset permissions or publish animations.
+Direct reuse requires identical bone names, parents, rest matrices, lengths and inheritance settings, with applied object transforms and pose evaluation enabled. Target object names and mesh appearance may differ. Bake constraints, drivers and NLA into a standalone bone-transform Action first; the worker rejects those dependencies and object/custom-property animation. For changed proportions, use the explicit retargeting mode below. This does not automatically transfer Roblox asset permissions or publish animations.
 
 `scripts/blender/examples/companion-variant.py` demonstrates changing a mesh while consuming a shared clip. Run `npm run test:blender` for an optional real Blender integration check: it builds the canonical fixture, applies its Action to a mesh variant with a different armature name/rotation mode, compares all 33 sampled frames, checks cache reuse, and rejects incompatible rest skeletons, bone names and constraints. This passed locally with Blender 5.2.3 LTS. It writes disposable evidence under `build/blender-reuse`; ordinary tooling tests do not require Blender.
+
+### Retargeting different proportions
+
+Add `retarget` beside `library` inside the target job's `animation` settings:
+
+```json
+{
+  "library": { "blend": "../../assets/animations/shared-idle.blend", "armature": "CanonicalRig" },
+  "retarget": {
+    "boneMap": { "Root": "Root", "Torso": "Body" },
+    "translation": "bone-length"
+  }
+}
+```
+
+`boneMap` maps **target names to source names**. It must cover every bone on both rigs once and preserve their parent hierarchy. Bone lengths, rest offsets, rolls and names can differ. Extra twist/helper bones, different chain topology, and automatic anatomical matching are not supported; prepare a corresponding export skeleton first. Omitting `retarget` keeps strict direct reuse.
+
+The worker samples the source at every integer frame in the job range, measures parent-relative motion against its rest skeleton, converts motion axes into the target bone's rest basis, then applies that motion to the target rest skeleton. Rest proportions remain unchanged. `translation: "bone-length"` (default) multiplies each bone's animated translation by that target/source bone length ratio; `"none"` preserves translation distances while still converting axes. This includes the root bone: its length ratio is a mechanical scaling choice, not an automatic leg-length/stride estimate. Both rigs must use the same applied coordinate system and units; `studsPerUnit` converts the final output to Roblox units.
+
+The result is a new, editable quaternion Action baked at the configured fps, with linear keys between sampled frames. The worker uses Blender's [local/pose matrix conversion](https://docs.blender.org/api/5.2/bpy.types.Bone.html#bpy.types.Bone.convert_local_to_pose) for target inheritance settings and reads back every baked bone matrix before export. Nonrigid scale/shear, incomplete maps, changed hierarchy, and unrepresentable results fail. The existing standalone Action restrictions apply. Reports include the map, translation ratios, baked frame count and maximum matrix error; all settings participate in cache identity.
+
+Retargeting transfers motion; it does **not** solve foot planting, hand contacts, ground collision or IK. Review the four motion images and final animation in Studio for sliding, intersections and contact changes. Keep the canonical source and the retarget job so corrected variants can be regenerated rather than editing the only copy of a clip.
+
+`npm run test:blender` also exercises renamed bones with 2x/3x bone lengths, changed roll, animated translation and parent rotation; it checks every exported frame for both translation modes, cache reuse, incomplete maps and wrong parent mapping. Evidence is written under `build/blender-reuse`.
 
 ## Studio configuration and inspection
 

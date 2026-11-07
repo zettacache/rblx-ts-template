@@ -120,6 +120,31 @@ function validate(doc, base) {
 			if (!fs.statSync(blend).isFile()) throw Error("Missing animation library.");
 			result.animation = { ...a, library: { ...lib, blend } };
 		}
+		if (a.retarget !== undefined) {
+			const r = a.retarget;
+			if (
+				!a.library ||
+				!r ||
+				typeof r !== "object" ||
+				Array.isArray(r) ||
+				!r.boneMap ||
+				typeof r.boneMap !== "object" ||
+				Array.isArray(r.boneMap) ||
+				!Object.keys(r.boneMap).length ||
+				Object.entries(r.boneMap).some(
+					([target, source]) => !target || typeof source !== "string" || !source,
+				) ||
+				new Set(Object.values(r.boneMap)).size !== Object.keys(r.boneMap).length ||
+				(r.translation !== undefined && !["bone-length", "none"].includes(r.translation))
+			)
+				throw Error(
+					"retarget requires a library, a one-to-one boneMap (target to source), and translation bone-length or none.",
+				);
+			result.animation = {
+				...result.animation,
+				retarget: { ...r, translation: r.translation ?? "bone-length" },
+			};
+		}
 	}
 	return result;
 }
